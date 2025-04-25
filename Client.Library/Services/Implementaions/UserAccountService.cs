@@ -23,9 +23,12 @@ namespace Client.Library.Services.Implementaions
             if (!result.IsSuccessStatusCode) return new LoginResponse(false, "Error Occured");
             return await result.Content.ReadFromJsonAsync<LoginResponse>()!;
         }
-        public Task<LoginResponse> RefreshTokenAsync(RefreshToken token)
+        public async Task<LoginResponse> RefreshTokenAsync(RefreshToken token)
         {
-            throw new NotImplementedException();
+            var client = getHttpClient.GetPublicHttpClient();
+            var result = await client.PostAsJsonAsync($"{AuthURL}/refresh-token", token);
+            if (!result.IsSuccessStatusCode) return new LoginResponse(false, "Error Occured");
+            return await result.Content.ReadFromJsonAsync<LoginResponse>()!;
         }
         public async Task<WeatherForecast[]> GetWeatherForecast()
         {

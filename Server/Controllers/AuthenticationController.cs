@@ -1,4 +1,5 @@
 ﻿using BaseLibrary.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Server.Library.Repositories.Contracts;
@@ -7,9 +8,10 @@ namespace Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AllowAnonymous]
     public class AuthenticationController(IUserAccount accountInterface) : ControllerBase
     {
-        [HttpPost("register")]
+        [HttpPost("")]
         public async Task<IActionResult> CreateAsync (Register user)
         {
             if (user == null) return BadRequest("Model is Empty");

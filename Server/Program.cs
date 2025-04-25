@@ -42,9 +42,22 @@ builder.Services.AddAuthentication(
             ValidateIssuerSigningKey = true,
             ValidIssuer= jwtSection!.Issuer,
             ValidAudience = jwtSection!.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection.Key!))
-        
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection.Key!)),
+            ClockSkew = TimeSpan.Zero
         };
+        //options.Events = new JwtBearerEvents
+        //{
+        //    OnAuthenticationFailed = context =>
+        //    {
+        //        Console.WriteLine("Authentication failed: " + context.Exception.Message);
+        //        return Task.CompletedTask;
+        //    },
+        //    OnTokenValidated = context =>
+        //    {
+        //        Console.WriteLine("Token validated successfully.");
+        //        return Task.CompletedTask;
+        //    }
+        //};
     });
 
 builder.Services.AddCors(
@@ -70,8 +83,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorWasm");
-app.UseAuthorization();
+
 app.UseAuthentication();
+app.UseAuthorization();
+
 
 app.MapControllers();
 

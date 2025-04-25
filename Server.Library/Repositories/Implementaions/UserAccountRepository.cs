@@ -161,7 +161,7 @@ namespace Server.Library.Repositories.Implementaions
                 issuer:config.Value.Issuer,
                 audience:config.Value.Audience,
                 claims:userClaims,
-                expires:DateTime.Now.AddDays(1),
+                expires:DateTime.Now.AddSeconds(20),
                 signingCredentials:credentials
                 );
             return new JwtSecurityTokenHandler().WriteToken(token);
