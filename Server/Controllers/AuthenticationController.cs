@@ -11,7 +11,7 @@ namespace Server.Controllers
     [AllowAnonymous]
     public class AuthenticationController(IUserAccount accountInterface) : ControllerBase
     {
-        [HttpPost("")]
+        [HttpPost("register")]
         public async Task<IActionResult> CreateAsync (Register user)
         {
             if (user == null) return BadRequest("Model is Empty");

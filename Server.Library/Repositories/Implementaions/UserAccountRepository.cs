@@ -80,9 +80,11 @@ namespace Server.Library.Repositories.Implementaions
             var applicationUser = await FindUserByEmail(user.Email!);
             if (applicationUser is null) return new LoginResponse(false, "User Not Found");
 
+            //Verify Password
+            if (!BCrypt.Net.BCrypt.Verify(user.Password, applicationUser.Password))
+                return new LoginResponse(false, "Email/Password Not Valid");
+
             var getUserRole = await FindUserRole(applicationUser.Id);
-
-
             if (getUserRole is null) return new LoginResponse(false, "User Role Not Found");
             
             SystemRole? getRoleName = await FindRoleName(getUserRole);
