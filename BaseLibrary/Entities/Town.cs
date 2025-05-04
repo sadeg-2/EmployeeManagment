@@ -1,8 +1,11 @@
-﻿namespace BaseLibrary.Entities
+﻿using System.Text.Json.Serialization;
+
+namespace BaseLibrary.Entities
 {
     public class Town : BaseEntity
     {
         // One To Many Relation With Employee
+        [JsonIgnore]
         public List<Employee>? Employees { get; set; }
 
         // Many To One Relation with General City

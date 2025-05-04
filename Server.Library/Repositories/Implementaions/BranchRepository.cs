@@ -7,7 +7,7 @@ using Server.Library.Repositories.Contracts;
 
 namespace Server.Library.Repositories.Implementaions
 {
-    public class BranchRepository(AppDbContext appDbContext):IGenericRepositoryInterface<Branch>
+    public class BranchRepository(AppDbContext appDbContext) : IGenericRepositoryInterface<Branch>
     {
         public async Task<GeneralResponse> DeleteById(int id)
         {
@@ -19,7 +19,10 @@ namespace Server.Library.Repositories.Implementaions
             return Success();
         }
         public async Task<List<Branch>> GetAll() =>
-                    await appDbContext.Branches.ToListAsync();
+                    await appDbContext.Branches.
+                          AsNoTracking().
+                          Include(branch => branch.Department).
+                          ToListAsync();
         public async Task<Branch?> GetById(int id) =>
              await appDbContext.Branches.FindAsync(id);
 
@@ -35,9 +38,10 @@ namespace Server.Library.Repositories.Implementaions
 
         public async Task<GeneralResponse> Update(Branch item)
         {
-            var dept = await appDbContext.Departments.FindAsync(item.Id);
-            if (dept is null) return NotFound();
-            dept.Name = item.Name;
+            var branch = await appDbContext.Branches.FindAsync(item.Id);
+            if (branch is null) return NotFound();
+            branch.Name = item.Name;
+            branch.DepartmentId = item.DepartmentId;
             await Commit();
             return Success();
         }
@@ -48,7 +52,7 @@ namespace Server.Library.Repositories.Implementaions
 
         private async Task<bool> CheckName(string name)
         {
-            var dept = await appDbContext.Departments.FirstOrDefaultAsync(x => x.Name!.ToLower().Equals(name.ToLower()));
+            var dept = await appDbContext.Branches.FirstOrDefaultAsync(x => x.Name!.ToLower().Equals(name.ToLower()));
             return dept is null;
         }
     }

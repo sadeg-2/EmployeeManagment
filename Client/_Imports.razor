@@ -1,5 +1,7 @@
 ﻿@using System.Net.Http
 @using System.Net.Http.Json
+@using BaseLibrary.Entities
+@using Client.ApplicationStates
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
@@ -9,13 +11,45 @@
 @using Client
 @using Client.Layout
 @using Client.Pages.OtherPages
+@using Client.Pages.ContentPages.DepartmentPages
+@using Client.Pages.ContentPages.LocationPages
 
 @using BaseLibrary.DTOs
 @using Client.Library.Helpers
 @using Microsoft.AspNetCore.Components.Authorization
 @using Client.Library.Services.Contracts
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
+@using Client.Pages.ContentPages.UserPages
+@using Client.Pages.ContentPages.EmployeePages
 
 
 @inject AuthenticationStateProvider AuthStateProvider
-@inject IUserAccountService accountService 
 @inject NavigationManager NavManager
+@inject AllState allState
+
+@* Authentication *@
+@inject IUserAccountService accountService 
+
+@* Syncfusion dialog Service *@ 
+@inject SfDialogService dialogService
+
+
+@* GeneralDepartment , Department , Branch *@
+@inject IGenericServieInterface<GeneralDepartment> generalDepartmentService 
+@inject IGenericServieInterface<Department> departmentService 
+@inject IGenericServieInterface<Branch> branchService 
+
+@* Country , City , Town *@
+@inject IGenericServieInterface<Country> countryService 
+@inject IGenericServieInterface<City> cityService 
+@inject IGenericServieInterface<Town> townService
+
+@* Employee *@
+@inject IGenericServieInterface<Employee> employeeService
+
+
+
+
+
