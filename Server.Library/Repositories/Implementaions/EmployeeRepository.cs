@@ -59,7 +59,6 @@ namespace Server.Library.Repositories.Implementaions
             findUser.BranchId   = item.BranchId;
             findUser.CivilId = item.CivilId;
             findUser.FileNumber = item.FileNumber;
-            findUser.FullName = item.FullName;
             findUser.TelephoneNumber = item.TelephoneNumber;
             await Commit();
             return Success();

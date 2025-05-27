@@ -1,51 +1,49 @@
-﻿<SfDialog Width="350px" IsModal=true ShowCloseIcon=true @bind-Visible=IsVisible>
-    <DialogEvents OnOpen="OpenDialog"></DialogEvents>
-    <DialogTemplates>
-        <Header>@Title Department</Header>
-        <Content>
-            <EditForm Model="GeneralDepartment" Enhance OnSubmit="Save">
-                <div class="card border-success">
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label class="form-label">Name</label>
-                            <InputText class="form-control" @bind-Value="GeneralDepartment.Name" />
-                        </div>
-                    </div>
-                </div>
-            </EditForm>
-        </Content>
-    </DialogTemplates>
-    <DialogButtons>
-        <DialogButton Content="Save" Type="ButtonType.Submit" IsPrimary=true OnClick="Save"/>
-    </DialogButtons>
-</SfDialog>
+﻿<MudDialog>
+    <TitleContent>
+        @Title General Department
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@generalDepartment">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField Label="Id" @bind-value="generalDepartment.Id" ReadOnly=true/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="generalDepartment.Name" Label="Name" Required="true" />
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" OnClick="Save">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
-    [Parameter] public GeneralDepartment GeneralDepartment { get; set; } = new();
+    [Parameter] public string Title { get; set; }
+    [Parameter]
+    public GeneralDepartment generalDepartment { get; set; } = new();
     [Parameter] public EventCallback<GeneralDepartment> HandleSaveOperationEvent { get; set; }
 
-    public bool IsVisible { get; set; } = false;
-    public string Title { get; set; } = "Add";
-
-    public void OpenDialog()
-    {
-        IsVisible = true;
-        StateHasChanged();
-    }
     async void Save()
     {
-        if (string.IsNullOrEmpty(GeneralDepartment.Name))
+        if (string.IsNullOrEmpty(generalDepartment.Name))
         {
-            await dialogService.AlertAsync("You Need to provide Department Name","Alert!");
+
+            Snackbar.Add("You Need to provide General Department Name", Severity.Warning);
         }
         else
         {
-            await HandleSaveOperationEvent.InvokeAsync(GeneralDepartment);
+            await HandleSaveOperationEvent.InvokeAsync(generalDepartment);
+            MudDialog.Close(DialogResult.Ok("Done"));
+            // StateHasChanged();
         }
     }
-    public void ChangeTitle(string title)
-    {
-        Title = title;
-    }
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
 
+    private void Cancel() => MudDialog.Cancel();
 }

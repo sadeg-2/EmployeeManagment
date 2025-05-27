@@ -1,129 +1,141 @@
-﻿@implements IDisposable
-
+﻿ @implements IDisposable
 @if (allState.ShowDepartment)
 {
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="float-start">Department</h4>
-                        <button class="btn btn-outline-success float-end" @onclick=AddButtonClicked>
-                            <i class="bi bi-plus-circle-dotted"></i>
-                            Add Department
-                        </button>
-                    </div>
-                    <div class="card-header" style="max-height:580px;overflow-x:hidden;overflow-y:scroll;">
-                        <div class="card-body">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">#</th>
-                                        <th scope="col">Id</th>
-                                        <th scope="col">Department</th>
-                                        <th scope="col">General Department</th>
-                                        <th scope="col">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if (Departments is not null)
-                                    {
-                                        int count = 1;
-                                        foreach (var item in Departments)
-                                        {
-                                            <tr>
-                                                <th scope="row">@count</th>
-                                                <td>@item.Id</td>
-                                                <td>@item.Name</td>
-                                                <td>@item.GeneralDepartment!.Name</td>
-                                                <td>
-                                                    <i class="bi bi-pencil text-info" id="cursorStyle"
-                                                    @onclick="()=> EditClicked(item)"></i>
-                                                    <i class="bi bi-trash text-danger" id="cursorStyle"
-                                                    @onclick="()=> DeleteClicked(item)"></i>
-                                                </td>
-                                            </tr>
-
-                                            count++;
-                                        }
-
-                                    }
-                                    else
-                                    {
-                                        <tr>
-                                            <td colspan="4">
-                                                <div class="alert alert-info text-center">No Department added yet!</div>
-                                            </td>
-                                        </tr>
-                                    }
-
-
-                                </tbody>
-
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <br />
+    <br />
+    <MudTable
+    Items="filteredDepartments"
+    Hover="true"
+    SortLabel="Sort By"
+    Elevation="4"
+    AllowUnsorted="false"
+    Striped="true"
+    Bordered="true"
+    Dense="true"
+    Class="p-4"
+    >
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Departments</MudText>
+            <MudSpacer />
+            <MudTextField T="string"
+            Immediate="true"
+            Value="@searchString1"
+            ValueChanged="OnSearchChanged"
+            Placeholder="Search"
+            Adornment="Adornment.Start"
+            AdornmentIcon="@Icons.Material.Filled.Search"
+            IconSize="Size.Medium"
+            Class="mt-0" />
+            <MudSpacer />
+            <MudButton @onclick="AddItem" Variant="Variant.Filled" Color="Color.Primary">
+                Add Department
+            </MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>#</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Department, object>(x=>x.Id)">Id</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Department, object>(x=>x.Name)">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Department, object>(x=>x.GeneralDepartment!.Name)">General Department</MudTableSortLabel></MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="#">@((filteredDepartments?.ToList().IndexOf(context) ?? -1) + 1)</MudTd>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Name">@context.GeneralDepartment!.Name</MudTd>
+            <MudTd DataLabel="Action">
+                <i class="bi bi-pencil text-info" id="cursorStyle"
+                @onclick="()=> EditClicked(context)"></i>
+                <i class="bi bi-trash text-danger" id="cursorStyle"
+                @onclick="()=> DeleteClicked(context)"></i>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudTd ColSpan="4" Align="Align.Center">
+                <MudText Typo="Typo.body1">No matching data found.                                                     </MudText>
+            </MudTd>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[]{10, 20,30}" />
+        </PagerContent>
+    </MudTable>
 }
-
-<DepartmentDialog @ref="departmentDialog"
-HandleSaveOperationEvent="HandleSaveOperationEvent"
-Department="Department"
-GeneralDepartments="GeneralDepartments"
-/>
-
-<style>
-    .cursorStyle {
-    cursor: pointer;
-    }
-</style>
 @code {
-    Department Department = new();
-    DepartmentDialog? departmentDialog;
-
     public string Title { get; set; } = "Add";
-    public List<GeneralDepartment> GeneralDepartments { get; set; } = new();
-    public List<Department> Departments { get; set; } = new();
+    // for add or update
+    public Department department { get; set; } = new();
 
+    //for get data 
+    private List<Department>? departments = new();
+
+    // for using selector
+    public List<GeneralDepartment> generalDepartments { get; set; } = new();
+
+    // for show data with filtering 
+    private IEnumerable<Department>? filteredDepartments => departments.Where(FilterFunc);
+    private string _filterText = string.Empty;
+
+    private string searchString1 = "";
     protected override async Task OnInitializedAsync()
     {
-        await GetGeneralDepartment();
         await GetDepartment();
+        await GetGeneralDepartment();
         allState.Action += StateHasChanged;
     }
-    public async Task GetGeneralDepartment()
-    {
-        GeneralDepartments = await generalDepartmentService.GetAll(Constants.GeneralDepartmentBaseUrl);
-    } 
     public async Task GetDepartment()
     {
-        Departments = await departmentService.GetAll(Constants.DepartmentBaseUrl);
+        departments = await departmentService.GetAll(Constants.DepartmentBaseUrl);
     }
 
-    void AddButtonClicked()
+    public async Task GetGeneralDepartment()
     {
-        Department = new();
-        departmentDialog?.ChangeTitle("Add");
-        OpenDialog();
-    }  
-
-
+        generalDepartments = await generalDepartmentService.GetAll(Constants.GeneralDepartmentBaseUrl);
+    }
     public void Dispose()
     {
         allState.Action -= StateHasChanged;
     }
-    void OpenDialog()
+    private Task OnSearchChanged(string text)
     {
-        departmentDialog?.OpenDialog();
+        searchString1 = text;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private bool FilterFunc(Department element)
+    {
+        if (string.IsNullOrWhiteSpace(searchString1))
+            return true;
+        if (element.Name!.Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Id.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.GeneralDepartment!.Name.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+    private Task OpenDialogAsync()
+    {
+        var parameters = new DialogParameters()
+            {
+                ["Title"] = Title,
+                ["department"] = department,
+                ["generalDepartments"] = generalDepartments,
+                ["HandleSaveOperationEvent"] = EventCallback.Factory.Create(this,
+                            new Func<Department, Task>(HandleSaveOperationEvent))
+            };
+
+
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+
+        return DialogService.ShowAsync<DepartmentDialog>("Add", parameters, options);
     }
 
     public async Task HandleSaveOperationEvent(Department department)
     {
         bool successCheck = false;
-        if (Department.Id > 0)
+        if (department.Id > 0)
         {
             var response = await departmentService.
             Update(department, Constants.DepartmentBaseUrl);
@@ -137,25 +149,48 @@ GeneralDepartments="GeneralDepartments"
         }
         if (successCheck)
         {
-            Department = new();
+            department = new();
             await GetDepartment();
-            departmentDialog?.ChangeTitle("Add");
-            departmentDialog!.IsVisible = false;
         }
 
     }
+
+
+
     private void EditClicked(Department dep)
     {
-        departmentDialog?.ChangeTitle("Update");
-        Department = dep;
-        OpenDialog();
+        department = dep;
+        Title = "Update";
+        OpenDialogAsync();
+    }
+    private void AddItem()
+    {
+        department = new();
+        Title = "Add";
+        OpenDialogAsync();
     }
     private async Task DeleteClicked(Department dep)
     {
-        var confirm = await dialogService.ConfirmAsync($"Are you sure you wanna delete {dep.Name}", "Confirm Delete!");
-        if (!confirm) return;
 
-        var response = await departmentService.DeleteById(dep.Id, Constants.GeneralDepartmentBaseUrl);
+        var parameters = new DialogParameters
+            {
+                ["ContentText"] = $"Are you sure you wanna delete {dep.Name}",
+                ["ButtonText"] = "Yes",
+                ["Color"] = Color.Error
+            };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete!", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled)
+        {
+            Snackbar.Add("Canceled", Severity.Error);
+            return;
+        }
+
+        var response = await departmentService.DeleteById(dep.Id, Constants.DepartmentBaseUrl);
         if (await DisplayMessage(response.Flag, response.Message))
             await GetDepartment();
     }
@@ -164,12 +199,12 @@ GeneralDepartments="GeneralDepartments"
     {
         if (flag)
         {
-            await dialogService.AlertAsync(message, "Success");
+            Snackbar.Add(message, Severity.Success);
             return true;
         }
         else
         {
-            await dialogService.AlertAsync(message, "Alert!");
+            Snackbar.Add(message, Severity.Error);
             return false;
         }
     }

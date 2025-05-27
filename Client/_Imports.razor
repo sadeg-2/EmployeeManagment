@@ -18,11 +18,13 @@
 @using Client.Library.Helpers
 @using Microsoft.AspNetCore.Components.Authorization
 @using Client.Library.Services.Contracts
-@using Syncfusion.Blazor.Popups
+@* @using Syncfusion.Blazor.Popups
 @using Syncfusion.Blazor.Buttons
-@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.DropDowns *@
 @using Client.Pages.ContentPages.UserPages
 @using Client.Pages.ContentPages.EmployeePages
+
+@using MudBlazor
 
 
 @inject AuthenticationStateProvider AuthStateProvider
@@ -33,7 +35,12 @@
 @inject IUserAccountService accountService 
 
 @* Syncfusion dialog Service *@ 
-@inject SfDialogService dialogService
+@* @inject SfDialogService dialogService *@
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+
+
 
 
 @* GeneralDepartment , Department , Branch *@

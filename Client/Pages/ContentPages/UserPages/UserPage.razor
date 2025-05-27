@@ -1,5 +1,22 @@
-﻿@implements IDisposable
+﻿@page "/user"
+@implements IDisposable
 
+@if(allState.ShowUser)
+{
+    <h1>User Page</h1>
+}
+@code{
+    protected override async Task OnInitializedAsync()
+    {
+        allState.Action += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        allState.Action -= StateHasChanged;
+    }
+}
+@*
 @if (allState.ShowUser)
 {
     <div class="container mt-5">
@@ -155,3 +172,4 @@
     }
 
 }
+ *@

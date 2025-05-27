@@ -8,8 +8,8 @@ using Client.Library.Services.Implementaions;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Syncfusion.Blazor;
-using Syncfusion.Blazor.Popups;
+using MudBlazor;
+using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -46,9 +46,20 @@ builder.Services.AddScoped<IGenericServieInterface<Town>, GenericServiceImplemen
 // Employee
 builder.Services.AddScoped<IGenericServieInterface<Employee>, GenericServiceImplementaion<Employee>>();
 
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomLeft;
 
-builder.Services.AddSyncfusionBlazor();
-builder.Services.AddScoped<SfDialogService>();
+    config.SnackbarConfiguration.PreventDuplicates = false;
+    config.SnackbarConfiguration.NewestOnTop = false;
+    config.SnackbarConfiguration.ShowCloseIcon = true;
+    config.SnackbarConfiguration.VisibleStateDuration = 10000;
+    config.SnackbarConfiguration.HideTransitionDuration = 500;
+    config.SnackbarConfiguration.ShowTransitionDuration = 500;
+    config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
+}
 
+
+    );
 
 await builder.Build().RunAsync();

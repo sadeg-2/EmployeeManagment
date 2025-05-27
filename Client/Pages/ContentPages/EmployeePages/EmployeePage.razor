@@ -3,70 +3,343 @@
 {
     if (ShowMainPage)
     {
-        <div class="container-fluid mt-5">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <button class="btn btn-outline-success" @onclick="ShowAddOrUpdateEmployeeButtonClicked">
-                                <i class="bi bi-plus-circle-dotted"></i>
-                                Add Employee
-                            </button>
+        <br />
+        <br />
+        <MudTable Items="filteredEmployees"
+        Hover="true"
+        SortLabel="Sort By"
+        Elevation="4"
+        AllowUnsorted="false"
+        Striped="true"
+        Bordered="true"
+        Dense="true"
+        Class="p-4">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Employees</MudText>
+                <MudSpacer />
+                <MudTextField T="string"
+                Immediate="true"
+                Value="@searchString1"
+                ValueChanged="OnSearchChanged"
+                Placeholder="Search"
+                Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.Search"
+                IconSize="Size.Medium"
+                Class="mt-0" />
+                <MudSpacer />
+                <MudButton @onclick="ShowAddOrUpdateEmployeeButtonClicked" Variant="Variant.Filled" Color="Color.Primary">
+                    Add Employee
+                </MudButton>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>#</MudTh>
+                <MudTh>Image</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Employee, object>(x=>x.CivilId)">Civil Id</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Employee, object>(x=>x.FileNumber)">File #</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Employee, object>(x=>x.Name)">Name</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Employee, object>(x=>x.TelephoneNumber)">Phone Number</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Employee, object>(x=>x.JobName)">Job Name</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Employee, object>(x=>x.Branch.Name)">Branch Name</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Employee, object>(x=>x.Town.Name)">Town Name</MudTableSortLabel></MudTh>
+                <MudTh>Action</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="#">@((filteredEmployees?.ToList().IndexOf(context) ?? -1) + 1)</MudTd>
+                <MudTd>
+                    @{
+                        var employee = (context as Employee);
+                        <div class="image">
+                            <img src="@employee!.Photo" alt="@employee!.Name" width="150" height="150" />
                         </div>
-                        <div class="card-body">
-                            <SfGrid DataSource="@Employees">
-                                <GridColumns>
-                                    <GridColumn HeaderText="Employee Image">
-                                        <Template>
-                                            @{
-                                                var employee = (context as Employee);
-                                                <div class="image">
-                                                    <img src="@employee!.Photo" alt="@employee!.Name" width="150" height="150" />
-                                                </div>
-                                            }
-                                        </Template>
-                                    </GridColumn>
-                                    <GridColumn Field="@nameof(Employee.CivilId)" HeaderText="Civil Id"></GridColumn>
-                                    <GridColumn Field="@nameof(Employee.FileNumber)" HeaderText="File Number"></GridColumn>
-                                    <GridColumn Field="@nameof(Employee.Name)" HeaderText="Name"></GridColumn>
-                                    <GridColumn Field="@nameof(Employee.TelephoneNumber)" HeaderText="Telephone"></GridColumn>
-                                    <GridColumn Field="@nameof(Employee.JobName)" HeaderText="Job Name"></GridColumn>
-                                    <GridColumn Field="@nameof(Employee.Branch.Name)" HeaderText="Branch"></GridColumn>
-                                    <GridColumn Field="@nameof(Employee.Town.Name)" HeaderText="Town"></GridColumn>
-                                </GridColumns>
-                            </SfGrid>
-                        </div>
-                        <div class="card-footer"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    }
+                </MudTd>
+                <MudTd DataLabel="CivilId">@context.CivilId</MudTd>
+                <MudTd DataLabel="FileNumber">@context.FileNumber</MudTd>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="TelephoneNumber">@context.TelephoneNumber</MudTd>
+                <MudTd DataLabel="JobName">@context.JobName</MudTd>
+                <MudTd DataLabel="Branch">@context.Branch.Name</MudTd>
+                <MudTd DataLabel="Town">@context.Town.Name</MudTd>
+                <MudTd DataLabel="Action">
+                    <MudMenu Icon="@Icons.Material.Filled.MenuOpen"
+                    AriaLabel="Open user menu"
+                    FullWidth
+                    >
+                        <MudMenuItem OnClick="()=>ViewClicked(context)" Label="View" IconColor="Color.Tertiary" Icon="@Icons.Material.Outlined.Visibility"  />
+                        <MudMenuItem OnClick="()=>EditClicked(context)" Icon="@Icons.Material.Filled.Edit" IconColor="Color.Info" Label="Edit" />
+                        <MudMenuItem OnClick="()=>DeleteClicked(context)" Label="Remove" IconColor="Color.Error" Icon="@Icons.Material.Outlined.Delete" />
+                        <MudDivider />
+                        <MudMenuItem OnClick="()=>AddVacationClicked(context)" Label="Add Vacation" Icon="@Icons.Material.Outlined.Backpack" IconColor="Color.Success" />
+                        <MudMenuItem OnClick="()=>AddOverTimeClicked(context)" Label="Add Over Time" Icon=@Icons.Material.Filled.WatchLater IconColor="Color.Primary" />
+                        <MudMenuItem OnClick="()=>AddHealthClicked(context)" Label="Add Health" Icon=@Icons.Material.Filled.HealthAndSafety IconColor="Color.Primary" />
+                        <MudMenuItem OnClick="()=>AddSanctionClicked(context)" Label="Add Sanction" Icon=@Icons.Material.Filled.Cancel IconColor="Color.Error" />
+                    </MudMenu>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudTd ColSpan="4" Align="Align.Center">
+                    <MudText Typo="Typo.body1">No matching data found.                                                     </MudText>
+                </MudTd>
+            </NoRecordsContent>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[]{10, 20,30}" />
+            </PagerContent>
+        </MudTable>
     }
-}
-<AddOrUpdateEmployeePage
+
+    <AddOrUpdateEmployeePage @ref="addOrUpdateEmployee"
+    Employee="Employee"
+    Countries="DefaultCountries"
+    Cities="SelectedCities"
+    Towns="SelectedTowns"
+    GeneralDepartments="DefaultGeneralDepartments"
+    Departments="SelectedDepartments"
+    Branches="SelectedBranches"
+    HandleCitySelectedEvent="HandleCitySelectedEvent"
+    HandleCountySelectedEvent="HandleCountySelectedEvent"
+    HandleDepartmentSelectedEvent="HandleDepartmentSelectedEvent"
     ShowAddOrUpdateEmployee="ShowAddOrUpdatePage"
+    NotifyParentFromCloseClicked="NotifyParentFromCloseClicked"
+    HandleSaveEmployeeEventClicked="HandleSaveEmployeeEventClicked"
+    HandleGeneralDepartmentSelectedEvent="HandleGeneralDepartmentSelectedEvent" />
     
+    <EmployeeDetailPage
+        EmployeeDetail="Employee"
+        ShowDetailPage=ShowDetailPage
+        HandleDetailPageCloseBtnClicked="HandleDetailPageCloseBtn"
     />
+}
+
 @code {
-    public List<Employee> Employees { get; set; } = new();
+    AddOrUpdateEmployeePage? addOrUpdateEmployee;
+    private List<Employee>? employees = [];
+    public Employee Employee { get; set; } = new();
+
+
+    // Country , City , Town
+    public List<Country> DefaultCountries { get; set; } = [];
+    public List<City> DefaultCities { get; set; } = [];
+    public List<Town> DefaultTowns { get; set; } = [];
+
+    // General Dep , Dep , bran
+    public List<GeneralDepartment> DefaultGeneralDepartments { get; set; } = [];
+    public List<Department> DefaultDepartments { get; set; } = [];
+    public List<Branch> DefaultBranches { get; set; } = [];
+
+    public List<Department> SelectedDepartments { get; set; } = [];
+    public List<Branch> SelectedBranches { get; set; } = [];
+    public List<City> SelectedCities { get; set; } = [];
+    public List<Town> SelectedTowns { get; set; } = [];
+
+
+
+    // Filtering Employees
+    private IEnumerable<Employee>? filteredEmployees => employees.Where(FilterFunc);
+    private string _filterText = string.Empty;
+    private string searchString1 = "";
+
+    private bool FilterFunc(Employee element)
+    {
+        if (string.IsNullOrWhiteSpace(searchString1))
+            return true;
+        if (element.Name!.Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.CivilId.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Branch!.Name.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Town!.Name.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.FileNumber.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.TelephoneNumber.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.JobName.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+    private Task OnSearchChanged(string text)
+    {
+        searchString1 = text;
+        StateHasChanged(); // Refresh the UI
+        return Task.CompletedTask;
+    }
+
+
     protected async override Task OnInitializedAsync()
     {
-        allState.Action = StateHasChanged;
         await LoadEmployee();
+        await LoadDefaults();
+        allState.Action += StateHasChanged;
+    }
+    public void Dispose() => allState.Action -= StateHasChanged;
+    private async Task LoadDefaults()
+    {
+        DefaultBranches = await branchService.GetAll(Constants.BrancBaseUrl);
+        DefaultDepartments = await departmentService.GetAll(Constants.DepartmentBaseUrl);
+        DefaultGeneralDepartments = await generalDepartmentService.GetAll(Constants.GeneralDepartmentBaseUrl);
+
+        DefaultTowns = await townService.GetAll(Constants.TownBaseUrl);
+        DefaultCities = await cityService.GetAll(Constants.CityBaseUrl);
+        DefaultCountries = await countryService.GetAll(Constants.CountryBaseUrl);
     }
     private async Task LoadEmployee()
     {
-        Employees = await employeeService.GetAll(Constants.EmployeeBaseUrl);
+        employees = await employeeService.GetAll(Constants.EmployeeBaseUrl);
     }
-    public void Dispose() => allState.Action -= StateHasChanged;
-
     public bool ShowMainPage { get; set; } = true;
     public bool ShowAddOrUpdatePage { get; set; } = false;
+
     void ShowAddOrUpdateEmployeeButtonClicked()
     {
         ShowMainPage = false;
         ShowAddOrUpdatePage = true;
     }
 
+    // Notify parent when add or update employee form closes
+    private async Task NotifyParentFromCloseClicked()
+    {
+        ShowMainPage = true;
+        ShowAddOrUpdatePage = false;
+        await LoadEmployee();
+    }
 
+    private void HandleGeneralDepartmentSelectedEvent(int generalDepartmentId) =>
+       SelectedDepartments = DefaultDepartments.Where(dep => dep.GeneralDepartmentId == generalDepartmentId).ToList();
+    private void HandleCountySelectedEvent(int countryId) =>
+          SelectedCities = DefaultCities.Where(c => c.CountryId == countryId).ToList();
+
+
+    private void HandleCitySelectedEvent(int cityId) =>
+        SelectedTowns = DefaultTowns.Where(town => town.CityId == cityId).ToList();
+
+    private void HandleDepartmentSelectedEvent(int depId) =>
+        SelectedBranches = DefaultBranches.Where(br => br.DepartmentId == depId).ToList();
+
+    async Task HandleSaveEmployeeEventClicked(Employee employee)
+    {
+        bool success = false;
+        if (employee.Id > 0)
+        {
+            var result = await employeeService.Update(employee, Constants.EmployeeBaseUrl);
+            success = DisplayMessage(result.Flag, result.Message);
+        }
+        else
+        {
+            var result = await employeeService.Insert(employee, Constants.EmployeeBaseUrl);
+            success = DisplayMessage(result.Flag, result.Message);
+        }
+        if (success)
+        {
+            ShowMainPage = true;
+            ShowAddOrUpdatePage = false;
+            await LoadEmployee();
+            addOrUpdateEmployee!.ClearContent();
+        }
+
+    }
+
+    private bool DisplayMessage(bool flag, string message)
+    {
+        if (flag)
+        {
+            Snackbar.Add(message, Severity.Success);
+            return true;
+        }
+        else
+        {
+            Snackbar.Add(message, Severity.Error);
+            return false;
+        }
+    }
+
+
+    public Employee SelectedEmployee { get; set; }
+
+    public bool ShowDetailPage { get; set; } = false;
+    private void ViewClicked(Employee emp)
+    {
+        ShowDetailPage = true;
+        ShowMainPage = false;
+        Employee = emp;
+    }
+
+    void HandleDetailPageCloseBtn()
+    {
+        ShowDetailPage = false;
+        ShowMainPage = true;
+        
+    }
+    private void EditClicked(Employee emp)
+    {
+        addOrUpdateEmployee!.Employee.Id = emp.Id;
+        // Employee Group 1
+        addOrUpdateEmployee!.EmployeeGroup1.Name = emp.Name;
+        addOrUpdateEmployee!.EmployeeGroup1.TelephoneNumber = emp.TelephoneNumber;
+        addOrUpdateEmployee!.EmployeeGroup1.Address = emp.Address;
+        addOrUpdateEmployee!.EmployeeGroup1.FileNumber = emp.FileNumber;
+        addOrUpdateEmployee!.EmployeeGroup1.Photo = emp.Photo;
+        addOrUpdateEmployee!.EmployeeGroup1.CivilId = emp.CivilId;
+
+        // Employee Group 2
+        addOrUpdateEmployee!.EmployeeGroup2.JobName = emp.JobName;
+        addOrUpdateEmployee!.EmployeeGroup2.Other = emp.Other;
+
+        addOrUpdateEmployee!.GeneralDepartmentName = emp.Branch.Department.GeneralDepartment.Name;
+        addOrUpdateEmployee!.DepartmentName = emp.Branch.Department.Name;
+        addOrUpdateEmployee!.BranchName = emp.Branch.Name;
+
+        addOrUpdateEmployee.CountryName = emp.Town.City.Country.Name;
+        addOrUpdateEmployee.CityName = emp.Town.City.Name;
+        addOrUpdateEmployee.TownName = emp.Town.Name;
+
+        addOrUpdateEmployee.Title = "Update";
+        ShowAddOrUpdateEmployeeButtonClicked();
+    }
+    private async Task DeleteClicked(Employee emp)
+    {
+        var parameters = new DialogParameters
+            {
+                ["ContentText"] = $"Are you sure you wanna delete {emp.Name}",
+                ["ButtonText"] = "Yes",
+                ["Color"] = Color.Error
+            };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete!", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled)
+        {
+            Snackbar.Add("Canceled", Severity.Error);
+            return;
+        }
+
+        var response = await employeeService.DeleteById(emp.Id, Constants.EmployeeBaseUrl);
+        if (DisplayMessage(response.Flag, response.Message))
+            await LoadEmployee();
+    }
+    private void AddVacationClicked(Employee emp)
+    {
+        Snackbar.Add($"{emp.Name} Add Vacation clicked ", Severity.Info);
+        SelectedEmployee = emp;
+    }
+    private void AddOverTimeClicked(Employee emp)
+    {
+        Snackbar.Add($"{emp.Name} Add Over Time clicked ", Severity.Error);
+        SelectedEmployee = emp;
+    }
+    private void AddSanctionClicked(Employee emp)
+    {
+        Snackbar.Add($"{emp.Name} Add Sanction clicked ", Severity.Error);
+        SelectedEmployee = emp;
+    }
+    private void AddHealthClicked(Employee emp)
+    {
+        Snackbar.Add($"{emp.Name} Add Health clicked ", Severity.Error);
+        SelectedEmployee = emp;
+    }
+   
 }
+

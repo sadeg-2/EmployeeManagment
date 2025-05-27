@@ -84,14 +84,14 @@
         }
         else
         {
-            await DisplayDialog(result.Message, "Alert");
+             await DisplayDialog(result.Message, "Alert");
 
         }
         ShowLoadingButton = false;
     }
     private async Task DisplayDialog(string content,string title)
     {
-        await dialogService.AlertAsync(content:content , title:title);  
+        // await dialogService.AlertAsync(content:content , title:title);  
     }
 
 }

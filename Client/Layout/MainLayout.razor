@@ -9,25 +9,20 @@
 
     <main>
         <div class="top-row px-4">
-           @*  <AuthorizeView>
-                <Authorized>
-                    <a class="btn btn-none text-danger" @onclick="LogoutClicked">Log out</a>
-                </Authorized>
-                <NotAuthorized>
-                    <a class="btn btn-none" href="identity/account/login">LogIn</a>
-                    <a class="btn btn-none" href="identity/account/register">Register</a>
-                </NotAuthorized>
-            </AuthorizeView> *@
             <ProfileDropDown></ProfileDropDown>
         </div>
-
         <article class="content px-4">
             @Body
         </article>
     </main>
 </div>
-<Syncfusion.Blazor.Popups.SfDialogProvider/>
+@* Required *@
+<MudThemeProvider />
+<MudPopoverProvider />
 
+@* Needed for dialogs *@
+<MudDialogProvider />
+<MudSnackbarProvider />
 @code {
     async Task LogoutClicked()
     {
