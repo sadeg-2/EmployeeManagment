@@ -1,0 +1,209 @@
+﻿ @implements IDisposable
+@if (allState.ShowSanction)
+{
+    <br />
+    <br />
+    <MudTable Items="filteredData"
+    Hover="true"
+    SortLabel="Sort By"
+    Elevation="4"
+    AllowUnsorted="false"
+    Striped="true"
+    Bordered="true"
+    Dense="true"
+    Class="p-4">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Manage Sanction's</MudText>
+            <MudSpacer />
+            <MudTextField T="string"
+            Immediate="true"
+            Value="@searchString1"
+            ValueChanged="OnSearchChanged"
+            Placeholder="Search"
+            Adornment="Adornment.Start"
+            AdornmentIcon="@Icons.Material.Filled.Search"
+            IconSize="Size.Medium"
+            Class="mt-0" />
+            <MudSpacer />
+            <MudButton @onclick="AddItem" Variant="Variant.Filled" Color="Color.Primary">
+                Add
+            </MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>#</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Sanction, object>(x=>x.Id)">Id</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Sanction, object>(x=>x.Punishment)">Punishment</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Sanction, object>(x=>x.PunishmentDate)">Punishment Date</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Sanction, object>(x=>x.EmployeeId)">Employee Id</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Sanction, object>(x=>x.SanactionType?.Name)">Sanction Type</MudTableSortLabel></MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="#">@((filteredData?.ToList().IndexOf(context) ?? -1) + 1)</MudTd>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="Punishment">@context.Punishment</MudTd>
+            <MudTd DataLabel="PunishmentDate">@context.PunishmentDate</MudTd>
+            <MudTd DataLabel="EmployeeId">@context.EmployeeId</MudTd>
+            <MudTd DataLabel="SanactionType">@context.SanactionType?.Name</MudTd>
+            <MudTd DataLabel="Action">
+                <i class="bi bi-pencil text-info" id="cursorStyle"
+                @onclick="()=> EditClicked(context)"></i>
+                <i class="bi bi-trash text-danger" id="cursorStyle"
+                @onclick="()=> DeleteClicked(context)"></i>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudTd ColSpan="4" Align="Align.Center">
+                <MudText Typo="Typo.body1">No matching data found.                                                     </MudText>
+            </MudTd>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[]{10, 20,30}" />
+        </PagerContent>
+    </MudTable>
+}
+@code {
+    public string Title { get; set; } = "Add";
+    // for add or update
+    public Sanction item { get; set; } = new();
+
+    //for get data
+    private List<Sanction>? data = new();
+
+    // for using selector
+    public List<SanctionType> dataSelect { get; set; } = new();
+
+    // for show data with filtering
+    private IEnumerable<Sanction>? filteredData => data.Where(FilterFunc);
+
+    private string _filterText = string.Empty;
+    private string searchString1 = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetData();
+        await GetDataSelect();
+        allState.Action += StateHasChanged;
+    }
+    public async Task GetData()
+    {
+        data = await sanctionService.GetAll(Constants.SanctionBaseUrl);
+    }
+
+    public async Task GetDataSelect()
+    {
+        dataSelect = await sanctionTypeService.GetAll(Constants.SanctionTypeBaseUrl);
+    }
+    public void Dispose()
+    {
+        allState.Action -= StateHasChanged;
+    }
+    private Task OnSearchChanged(string text)
+    {
+        searchString1 = text;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private bool FilterFunc(Sanction element)
+    {
+        if (string.IsNullOrWhiteSpace(searchString1))
+            return true;
+        if (element.Id.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Punishment.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.PunishmentDate.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Date.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    private Task OpenDialogAsync()
+    {
+        var parameters = new DialogParameters()
+            {
+                ["Title"] = Title,
+                ["item"] = this.item,
+                ["dataSelect"] = this.dataSelect,
+                ["HandleSaveOperationEvent"] = EventCallback.Factory.Create(this,
+                                            new Func<Sanction, Task>(HandleSaveOperationEvent))
+            };
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        return DialogService.ShowAsync<SanctionDialog>("Add", parameters, options);
+    }
+
+    public async Task HandleSaveOperationEvent(Sanction item)
+    {
+        bool successCheck = false;
+        if (item.Id > 0)
+        {
+            var response = await sanctionService.
+            Update(item, Constants.SanctionBaseUrl);
+            successCheck = DisplayMessage(response.Flag, response.Message);
+        }
+        else
+        {
+            var response = await sanctionService.
+           Insert(item, Constants.SanctionBaseUrl);
+            successCheck = DisplayMessage(response.Flag, response.Message);
+        }
+        if (successCheck)
+        {
+            this.item = new();
+            await GetData();
+        }
+        else
+        {
+            DisplayMessage(false, "There is an Error");
+        }
+
+    }
+
+    private void EditClicked(Sanction item)
+    {
+        this.item = item;
+        Title = "Update";
+        OpenDialogAsync();
+    }
+    private void AddItem()
+    {
+        this.item = new();
+        Title = "Add";
+        OpenDialogAsync();
+    }
+    private async Task DeleteClicked(Sanction item)
+    {
+
+        var parameters = new DialogParameters
+            {
+                ["ContentText"] = $"Are you sure you wanna delete {item.Id}",
+                ["ButtonText"] = "Yes",
+                ["Color"] = Color.Error
+            };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete!", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled)
+        {
+            Snackbar.Add("Canceled", Severity.Error);
+            return;
+        }
+
+        var response = await sanctionService.DeleteById(item.Id, Constants.SanctionBaseUrl);
+        if (DisplayMessage(response.Flag, response.Message))
+            await GetData();
+    }
+
+    private bool DisplayMessage(bool flag, string message)
+    {
+        Snackbar.Add(message, flag ? Severity.Success : Severity.Error);
+        return flag;
+    }
+
+}

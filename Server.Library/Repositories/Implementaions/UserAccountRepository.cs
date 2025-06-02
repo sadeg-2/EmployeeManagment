@@ -8,7 +8,6 @@ using BaseLibrary.Responses;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.VisualBasic;
 using Server.Library.Data;
 using Server.Library.Helpers;
 using Server.Library.Repositories.Contracts;
@@ -16,7 +15,7 @@ using Constants = Server.Library.Helpers.Constants;
 
 namespace Server.Library.Repositories.Implementaions
 {
-    public class UserAccountRepository(IOptions<JWTSection> config, AppDbContext appDbContext) : IUserAccount
+    public class UserAccountRepository(IOptions<JWTSection> config, AppDbContext appDbContext, IImageService imageService) : IUserAccount
     {
         public async Task<GeneralResponse> CreateAsync(Register user)
         {
@@ -29,7 +28,8 @@ namespace Server.Library.Repositories.Implementaions
                 return new GeneralResponse(false, "User Registered Already");
 
             // Save User 
-            var applicationUser = await AddToDataBase(new ApplicationUser() {
+            var applicationUser = await AddToDataBase(new ApplicationUser()
+            {
                 Email = user.Email,
                 FullName = user.FullName,
                 Password = BCrypt.Net.BCrypt.HashPassword(user.Password),
@@ -38,11 +38,14 @@ namespace Server.Library.Repositories.Implementaions
 
             var chekAdminRole = await appDbContext.SystemRoles.FirstOrDefaultAsync(
                 _ => _.Name!.Equals(Constants.Admin));
-            if (chekAdminRole is null) {
-                var createAdminRole = await AddToDataBase(new SystemRole() {
+            if (chekAdminRole is null)
+            {
+                var createAdminRole = await AddToDataBase(new SystemRole()
+                {
                     Name = Constants.Admin
                 });
-                await AddToDataBase(new UserRole() {
+                await AddToDataBase(new UserRole()
+                {
                     RoleId = createAdminRole.Id,
                     UserId = applicationUser.Id,
                 });
@@ -52,7 +55,8 @@ namespace Server.Library.Repositories.Implementaions
             var chekUserRole = await appDbContext.SystemRoles.FirstOrDefaultAsync(
                 _ => _.Name!.Equals(Constants.User));
             SystemRole response = new();
-            if (chekUserRole is null) {
+            if (chekUserRole is null)
+            {
                 response = await AddToDataBase(new SystemRole()
                 {
                     Name = Constants.User
@@ -63,7 +67,8 @@ namespace Server.Library.Repositories.Implementaions
                     UserId = applicationUser.Id,
                 });
             }
-            else {
+            else
+            {
                 await AddToDataBase(new UserRole()
                 {
                     RoleId = chekUserRole.Id,
@@ -101,7 +106,8 @@ namespace Server.Library.Repositories.Implementaions
                 findUser.Token = refreshToken;
                 await appDbContext.SaveChangesAsync();
             }
-            else {
+            else
+            {
                 await AddToDataBase(new RefreshTokenInfo() { Token = refreshToken, UserId = applicationUser.Id });
             }
 
@@ -148,7 +154,8 @@ namespace Server.Library.Repositories.Implementaions
         private async Task<UserRole?> FindUserRole(int userId) =>
             await appDbContext.UserRoles.FirstOrDefaultAsync(
                 _ => _.UserId == userId);
-        private string GenerateToken(ApplicationUser user, string role) {
+        private string GenerateToken(ApplicationUser user, string role)
+        {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config.Value.Key!));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
@@ -163,7 +170,7 @@ namespace Server.Library.Repositories.Implementaions
                 issuer: config.Value.Issuer,
                 audience: config.Value.Audience,
                 claims: userClaims,
-                expires: DateTime.Now.AddSeconds(20),
+                expires: DateTime.Now.AddDays(1),
                 signingCredentials: credentials
                 );
             return new JwtSecurityTokenHandler().WriteToken(token);
@@ -186,8 +193,9 @@ namespace Server.Library.Repositories.Implementaions
             if (allUsers.Count == 0 || allRoles.Count == 0)
                 return null!;
             var users = new List<ManageUser>();
-            foreach (var user in allUsers) {
-                var userRole = allUserRoles.FirstOrDefault(u=> u.UserId == user.Id);
+            foreach (var user in allUsers)
+            {
+                var userRole = allUserRoles.FirstOrDefault(u => u.UserId == user.Id);
                 var roleName = allRoles.FirstOrDefault(u => u.Id == userRole!.RoleId);
                 users.Add(new ManageUser()
                 {
@@ -206,7 +214,7 @@ namespace Server.Library.Repositories.Implementaions
              await appDbContext.UserRoles.AsNoTracking().ToListAsync();
         private async Task<List<SystemRole>> SystemRoles() =>
              await appDbContext.SystemRoles.AsNoTracking().ToListAsync();
-        
+
 
         public async Task<GeneralResponse> UpdateUser(ManageUser user)
         {
@@ -214,18 +222,49 @@ namespace Server.Library.Repositories.Implementaions
             var userRole = await appDbContext.UserRoles.FirstOrDefaultAsync(ur => ur.UserId == user.UserId);
             userRole!.RoleId = getRole!.Id;
             await appDbContext.SaveChangesAsync();
-            return new GeneralResponse(true,"User Role Updated Successfully");
+            return new GeneralResponse(true, "User Role Updated Successfully");
         }
 
         public async Task<List<SystemRole>> GetRoles() => await SystemRoles();
-        
+
 
         public async Task<GeneralResponse> DeleteUser(int id)
         {
             var user = await appDbContext.ApplicationUsers.FirstOrDefaultAsync(u => u.Id == id);
             appDbContext.ApplicationUsers.Remove(user!);
             await appDbContext.SaveChangesAsync();
-            return new GeneralResponse(true,"User Successfully Deleted");
+            return new GeneralResponse(true, "User Successfully Deleted");
+        }
+
+        public async Task<List<string>> GetUserImage(int id)
+        {
+            string result = null;
+            var imageUrl = await appDbContext.ApplicationUsers.FirstOrDefaultAsync(u => u.Id == id);
+            if (imageUrl is null || string.IsNullOrEmpty(imageUrl.Image))
+                return [result, imageUrl.Image];
+            else
+            {
+                result = await imageService.GetImageAsBase64(imageUrl.Image!);
+            }
+            return [result,imageUrl.Image];
+        }
+
+        public async Task<bool> UpdateProfile(UserProfile userProfile)
+        {
+            if (userProfile is null)
+                return false;
+            var user = await appDbContext.ApplicationUsers.FirstOrDefaultAsync(u => u.Id == int.Parse(userProfile.Id));
+            if (user is null)
+                return false;
+            user!.Email = userProfile.Email;
+            user.FullName = userProfile.Name;
+            if (!string.IsNullOrEmpty(userProfile.Image) 
+                && !user.Image!.ToLower().Equals(userProfile.ImageName.ToLower()))
+            {
+                user.Image = await imageService.SaveImageFromBase64Async(userProfile.Image);
+            }
+            await appDbContext.SaveChangesAsync();
+            return true;
         }
     }
 }

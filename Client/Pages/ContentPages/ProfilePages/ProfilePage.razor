@@ -1,0 +1,155 @@
+﻿@implements IDisposable
+@if (allState.ShowProfilePage)
+{
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-lg-3"></div>
+            <div class="col-lg-6">
+                <EditForm Model="userProfileState.userProfile" OnValidSubmit="UpdateProfile">
+                    <DataAnnotationsValidator />
+                    <div class="card border-success shadow-lg">
+                        <div class="card-header">Personal Information</div>
+                        <div class="card-body">
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-lg-3"></div>
+                                    <div class="col-lg-6 d-flex justify-content-center">
+                                        <div class="vstack gap-2">
+                                            <img style="width:100px;height:100px;border-radius:50%;" src="@userProfileState.userProfile.Image" />
+                                            <InputFile OnChange="UploadImage" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="form-label">Id</div>
+                                <input class="form-control" disabled type="text" value="@userProfileState.userProfile.Id" />
+                            </div>
+                            <div class="form-group">
+                                <div class="form-label">Name</div>
+                                <InputText class="form-control" @bind-Value="@userProfileState.userProfile.Name" />
+                            </div>
+                            <div class="form-group">
+                                <div class="form-label">Email</div>
+                                <input class="form-control" type="email" value="@userProfileState.userProfile.Email" />
+                            </div>
+                            <div class="form-group mt-4">
+                                @if (ShowSpinner)
+                                {
+                                    <ButtonLoadingSpinner />
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary float-end" type="submit">Save</button>
+                                }
+                            </div>
+
+                        </div>
+                        <div class="card-footer">
+                            <ValidationSummary />
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+            <div class="col-lg-3"></div>
+        </div>
+    </div>
+}
+@code {
+    public bool ShowSpinner { get; set; } = false;
+    protected override async Task OnInitializedAsync()
+    {
+        await UserDetails();
+        allState.Action += StateHasChanged;
+        userProfileState.Action += StateHasChanged;
+    }
+    private async Task UserDetails()
+    {
+        try
+        {
+            var client = await getHttpClient.GetPrivateHttpClient();
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            userProfileState.userProfile.Id = authState.User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+            userProfileState.userProfile.Name = authState.User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.Name)!.Value;
+            userProfileState.userProfile.Email = authState.User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.Email)!.Value;
+
+            var response = await client.GetAsync($"api/authentication/user-image/{userProfileState.userProfile.Id}");
+            if (!response.IsSuccessStatusCode)
+                return;
+
+            var result = await response.Content.ReadFromJsonAsync<List<string>>();
+            if (string.IsNullOrEmpty(result[0]))
+                return;
+            else
+            {
+                userProfileState.userProfile.Image = result[0]!;
+                userProfileState.userProfile.ImageName = result[1]!;
+            }
+        }
+        catch { }
+
+    }
+    private async Task UploadImage(InputFileChangeEventArgs e)
+    {
+        if (e.File.Name.ToLower().Contains(".png"))
+        {
+            var format = "image/png";
+            var resizeImage = await e.File.RequestImageFileAsync(format, 300, 300);
+            var buffer = new byte[resizeImage.Size];
+            await resizeImage.OpenReadStream().ReadAsync(buffer);
+            var image = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+            userProfileState.userProfile.Image = image;
+            userProfileState.userProfile.ImageName = e.File.Name;
+
+            image = "";
+            return;
+        }
+        Snackbar.Add("Png File Needed.", Severity.Error);
+
+        return;
+    }
+
+    async Task UpdateProfile()
+    {
+        if (userProfileState.userProfile.Image == "../images/profile/default.jpg")
+        {
+            Snackbar.Add("Add profile Image", Severity.Warning);
+        }
+        ShowSpinner = true;
+        var client = await getHttpClient.GetPrivateHttpClient();
+        var response = await client.PutAsJsonAsync("api/authentication/update-profile", userProfileState.userProfile);
+        if (!response.IsSuccessStatusCode)
+        {
+            ShowSpinner = false;
+            return;
+        }
+        var result = false;
+        if (response.IsSuccessStatusCode)
+        {
+            result = await response.Content.ReadFromJsonAsync<bool>();
+            if (result)
+            {
+                ShowSpinner = false;
+                Snackbar.Add("Profile Updated", Severity.Success);
+                userProfileState.ProfileUpdated();
+
+            }
+            // use result
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Error: " + error);
+        }
+        // result = await response.Content.ReadFromJsonAsync<bool>();
+
+        ShowSpinner = false;
+    }
+    public void Dispose()
+    {
+        allState.Action -= StateHasChanged;
+        userProfileState.Action -= StateHasChanged;
+    }
+
+}

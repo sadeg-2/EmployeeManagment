@@ -13,16 +13,21 @@
 @using Client.Pages.OtherPages
 @using Client.Pages.ContentPages.DepartmentPages
 @using Client.Pages.ContentPages.LocationPages
+@using System.Security.Claims;
+
 
 @using BaseLibrary.DTOs
 @using Client.Library.Helpers
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
 @using Client.Library.Services.Contracts
-@* @using Syncfusion.Blazor.Popups
-@using Syncfusion.Blazor.Buttons
-@using Syncfusion.Blazor.DropDowns *@
 @using Client.Pages.ContentPages.UserPages
 @using Client.Pages.ContentPages.EmployeePages
+@using Client.Pages.ContentPages.ProfilePages
+@using Client.Pages.OtherPages.OverTimePages
+@using Client.Pages.OtherPages.VacationPages
+@using Client.Pages.OtherPages.SanctionPages
+@using Client.Pages.OtherPages.DoctorPage
 
 @using MudBlazor
 
@@ -30,6 +35,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavManager
 @inject AllState allState
+@inject UserProfileState userProfileState
 
 @* Authentication *@
 @inject IUserAccountService accountService 
@@ -38,6 +44,7 @@
 @* @inject SfDialogService dialogService *@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject GetHttpClient getHttpClient
 
 
 
@@ -56,6 +63,19 @@
 @* Employee *@
 @inject IGenericServieInterface<Employee> employeeService
 
+@inject IGenericServieInterface<Doctor> doctorService
+
+@* Vacation  *@
+@inject IGenericServieInterface<Vacation> vacationService
+@inject IGenericServieInterface<VacationType> vacationTypeService
+
+@* Sanction *@
+@inject IGenericServieInterface<Sanction> sanctionService
+@inject IGenericServieInterface<SanctionType> sanctionTypeService
+
+@* Over Time *@
+@inject IGenericServieInterface<OverTime> overTimeService
+@inject IGenericServieInterface<OverTimeType> overTimeTypeService
 
 
 

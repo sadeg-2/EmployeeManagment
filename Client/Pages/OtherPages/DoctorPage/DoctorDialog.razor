@@ -1,0 +1,47 @@
+﻿<MudDialog>
+    <TitleContent>
+        @Title Employee Health Issue
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@Doctor">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField Label="Employee Id" @bind-value="Doctor.EmployeeId" ReadOnly=true />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="_date" Label="Date" Required="true" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="Doctor.MedicalDiagnose" Label="Medical Diagnose" Required="true" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="Doctor.MedicalRecommendation" Label="Medical Recommendation" Required="true" />
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" OnClick="Save">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private DateTime? _date = DateTime.Today;
+    [Parameter] public string Title { get; set; }
+    [Parameter] public Doctor Doctor { get; set; } = new();
+    [Parameter] public EventCallback<Doctor> HandleSaveOperationEvent { get; set; }
+
+    async void Save()
+    {
+        Doctor.Date = _date?? DateTime.Now;
+        await HandleSaveOperationEvent.InvokeAsync(Doctor);
+        MudDialog.Close(DialogResult.Ok("Done"));
+    }
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    private void Cancel() => MudDialog.Cancel();
+}

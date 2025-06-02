@@ -61,11 +61,68 @@
             Action?.Invoke();
         }
         // User
-        public bool ShowEmployee { get; set; }
+        public bool ShowEmployee { get; set; } = true;
         public void EmployeeClicked()
         {
             ResetAllDepartment();
             ShowEmployee = true;
+            Action?.Invoke();
+        }
+        public bool ShowHealth { get; set; }
+        public void ShowHealthClicked()
+        {
+            ResetAllDepartment();
+            ShowHealth = true;
+            Action?.Invoke();
+        }
+
+        public bool ShowSanction { get; set; }
+        public void ShowSanctionClicked()
+        {
+            ResetAllDepartment();
+            ShowSanction = true;
+            Action?.Invoke();
+        }
+        public bool ShowSanctionType { get; set; }
+        public void ShowSanctionTypeClicked()
+        {
+            ResetAllDepartment();
+            ShowSanctionType = true;
+            Action?.Invoke();
+        }
+        public bool ShowOverTime { get; set; }
+        public void ShowOverTimeClicked()
+        {
+            ResetAllDepartment();
+            ShowOverTime = true;
+            Action?.Invoke();
+        }
+        public bool ShowOverTimeType { get; set; }
+        public void ShowOverTimeTypeClicked()
+        {
+            ResetAllDepartment();
+            ShowOverTimeType = true;
+            Action?.Invoke();
+        }
+        public bool ShowVacation { get; set; }
+        public void ShowVacationClicked()
+        {
+            ResetAllDepartment();
+            ShowVacation = true;
+            Action?.Invoke();
+        }
+        public bool ShowVacationType { get; set; }
+        public void ShowVacationTypeClicked()
+        {
+            ResetAllDepartment();
+            ShowVacationType = true;
+            Action?.Invoke();
+        }
+        public bool ShowProfilePage { get; set; }
+        public void ShowProfilePageClicked()
+        {
+            ResetAllDepartment();
+            ShowProfilePage = true;
             Action?.Invoke();
         }
         private void ResetAllDepartment()
@@ -80,6 +137,17 @@
             
             ShowUser = false;
             ShowEmployee = false;
+            ShowHealth = false;
+            ShowProfilePage = false;
+
+            ShowOverTime = false;
+            ShowOverTimeType = false; 
+
+            ShowVacation = false;
+            ShowVacationType = false;
+
+            ShowSanction = false;
+            ShowSanctionType = false;
         }
     }
 }

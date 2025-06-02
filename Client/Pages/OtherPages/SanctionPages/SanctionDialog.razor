@@ -1,0 +1,74 @@
+﻿<MudDialog>
+    <TitleContent>
+        @Title Sanction
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@item">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField Label="Id" @bind-value="item.Id" ReadOnly=true />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Employee Id" @bind-value="item.EmployeeId" />
+                </MudItem> 
+                <MudItem xs="12">
+                    <MudTextField Label="Punishment" @bind-value="item.Punishment" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSelect T="int" Label="Sanction Type"
+                               @bind-Value="item.SanctionTypeId"
+                               Dense="true" Required="true">
+                        <MudSelectItem Value="0" Disabled="true">Select one...</MudSelectItem>
+
+                        @foreach (var element in dataSelect)
+                        {
+                            <MudSelectItem Value="@element.Id">@element.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="_date" Label="Date" Required="true" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="_punishmentDate" Label="Punishment Date" Required="true" />
+                </MudItem>
+
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" OnClick="Save">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private DateTime? _date = DateTime.Today;
+    private DateTime? _punishmentDate = DateTime.Today;
+    [Parameter] public Sanction item { get; set; } = new();
+    [Parameter] public string Title { get; set; }
+    [Parameter] public List<SanctionType> dataSelect { get; set; } = new();
+    [Parameter] public EventCallback<Sanction> HandleSaveOperationEvent { get; set; }
+
+    async void Save()
+    {
+        if (item.EmployeeId <= 0)
+        {
+            Snackbar.Add("You Need to provide Employee ID", Severity.Warning);
+        }
+        else
+        {
+            item.Date = _date ?? DateTime.Now;
+            item.PunishmentDate = _punishmentDate ?? DateTime.Now;
+            await HandleSaveOperationEvent.InvokeAsync(item);
+            MudDialog.Close(DialogResult.Ok("Done"));
+            // StateHasChanged();
+        }
+    }
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    private void Cancel() => MudDialog.Cancel();
+}

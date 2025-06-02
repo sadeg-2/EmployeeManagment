@@ -1,0 +1,48 @@
+﻿<MudDialog>
+    <TitleContent>
+        @title Vacation Type
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@item">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField Label="Id" @bind-value="item.Id" ReadOnly=true />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="item.Name" Label="Name" Required="true" />
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" OnClick="Save">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public string title { get; set; }
+    [Parameter] public VacationType item { get; set; } = new();
+    [Parameter] public EventCallback<VacationType> HandleSaveOperationEvent { get; set; }
+
+    async void Save()
+    {
+        if (string.IsNullOrEmpty(this.item.Name))
+        {
+
+            Snackbar.Add("You Need to provide Vacation Type Name", Severity.Warning);
+        }
+        else
+        {
+            await HandleSaveOperationEvent.InvokeAsync(item);
+            MudDialog.Close(DialogResult.Ok("Done"));
+            // StateHasChanged();
+        }
+    }
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    private void Cancel() => MudDialog.Cancel();
+}

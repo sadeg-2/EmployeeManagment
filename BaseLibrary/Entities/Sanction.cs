@@ -16,8 +16,6 @@ namespace BaseLibrary.Entities
 
         // Many to one with Sanaction Type
         public SanctionType? SanactionType { get; set; }
-
-
-
+        public int SanctionTypeId { get; set; }
     }
 }

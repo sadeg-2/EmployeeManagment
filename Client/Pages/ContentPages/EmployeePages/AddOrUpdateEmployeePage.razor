@@ -54,7 +54,7 @@
                                             <ValidationMessage For="()=> EmployeeGroup1.Address" class="text-danger" />
                                         </div>
                                         <div class="form-control mt-2">
-                                            <img src="@Employee.Photo" width="100" height="100" />
+                                            <img src="@EmployeeGroup1.Photo" width="100" height="100" />
                                         </div>
                                     </div>
                                 </div>
@@ -342,25 +342,24 @@
         await NotifyParentFromCloseClicked.InvokeAsync();
     }
 
-    //File Upload
+    // File Upload
     string ImageUploadMessage = "";
     private async Task UploadImage(InputFileChangeEventArgs e)
     {
-        if (e.File.Name.ToLower().Contains(".png"))
+        var file = e.File;
+        if (file == null || !file.Name.ToLower().EndsWith(".png"))
         {
-            var format = "image/png";
-            var resizeImage = await e.File.RequestImageFileAsync(format, 300, 300);
-            var buffer = new byte[resizeImage.Size];
-            await resizeImage.OpenReadStream().ReadAsync(buffer);
-            var imageData = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
-            ImageUploadMessage = "";
-            EmployeeGroup1.Photo = imageData;
-            imageData = "";
+            ImageUploadMessage = "PNG file needed.";
             return;
         }
-        ImageUploadMessage = "Png File Needed";
-        return;
+        var format = "image/png";
+        var resizedImage = await file.RequestImageFileAsync(format, 300, 300);
+        var buffer = new byte[resizedImage.Size];
+        await resizedImage.OpenReadStream().ReadAsync(buffer);
+        EmployeeGroup1.Photo = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+        ImageUploadMessage = ""; // Clear any previous message
     }
+
 
     // Validation Form
     private bool ValidateEmployeeGroup1()

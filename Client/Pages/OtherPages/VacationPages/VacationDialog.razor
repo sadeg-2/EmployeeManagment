@@ -1,0 +1,71 @@
+﻿<MudDialog>
+    <TitleContent>
+        @Title Vacation
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@item">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField Label="Id" @bind-value="item.Id" ReadOnly=true />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Employee Id" @bind-value="item.EmployeeId" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSelect T="int" Label="Vacation Type"
+                               @bind-Value="item.VacationTypeId"
+                               Dense="true" Required="true">
+                        <MudSelectItem Value="0" Disabled="true">Select one...</MudSelectItem>
+
+                        @foreach (var element in dataSelect)
+                        {
+                            <MudSelectItem Value="@element.Id">@element.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudDatePicker PickerVariant="PickerVariant.Dialog" @bind-Date="_startDate" Label="Start Date" Required="true" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Number Of Days" @bind-value="item.NumberOfDays" />
+                </MudItem>
+
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" OnClick="Save">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private DateTime? _startDate = DateTime.Today;
+    private DateTime? _endTime = DateTime.Today;
+    [Parameter] public Vacation item { get; set; } = new();
+    [Parameter] public string Title { get; set; }
+    [Parameter] public List<VacationType> dataSelect { get; set; } = new();
+    [Parameter] public EventCallback<Vacation> HandleSaveOperationEvent { get; set; }
+
+    async void Save()
+    {
+        if (item.EmployeeId <= 0 || _startDate is null || _endTime is null)
+        {
+            Snackbar.Add("You Need to provide Employee ID And Number Of Days should be <0", Severity.Warning);
+        }
+        else
+        {
+            item.StartDate = _startDate ?? DateTime.Now;
+            
+            await HandleSaveOperationEvent.InvokeAsync(item);
+            MudDialog.Close(DialogResult.Ok("Done"));
+            // StateHasChanged();
+        }
+    }
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -1,7 +1,11 @@
 ﻿ @implements IDisposable
+ @inject IJSRuntime JS
+
 @if (allState.ShowGeneralDepartment)
 {
     <br />
+   
+    <MudText Class="p-4" Typo="Typo.h6">General Departments</MudText>
     <br />
     <MudTable Items="filteredGeneralDepartments"
     Hover="true"
@@ -13,7 +17,12 @@
     Dense="true"
     Class="p-4">
         <ToolBarContent>
-            <MudText Typo="Typo.h6">General Departments</MudText>
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="ExportToExcel" Style="margin-top:10px;">
+                Export to Excel
+            </MudButton> 
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="ExportToPdf" Style="margin-top:10px;">
+                Export to Pdf
+            </MudButton>
             <MudSpacer />
             <MudTextField T="string"
             Immediate="true"
@@ -59,6 +68,7 @@
 @code {
     public string Title { get; set; } = "Add";
     public GeneralDepartment generalDepartment { get; set; } = new GeneralDepartment();
+
     private List<GeneralDepartment>? generalDepartments = new();
     private IEnumerable<GeneralDepartment>? filteredGeneralDepartments => generalDepartments.Where(FilterFunc);
     private string _filterText = string.Empty;
@@ -89,6 +99,23 @@
         if (element.Id.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
             return true;
         return false;
+    }
+
+    private async Task ExportToExcel()
+    {
+        byte[] excelBytes = ExcelExporter.ExportToExcel(filteredGeneralDepartments, "General Department");
+
+        using var stream = new MemoryStream(excelBytes);
+        var streamRef = new DotNetStreamReference(stream);
+
+        await JS.InvokeVoidAsync("downloadFileFromStream", "generalDepartment.xlsx", streamRef);
+    }
+    private async Task ExportToPdf()
+    {
+        var headers = new[] { "Name", "Id" };
+        var rows = filteredGeneralDepartments.Select(p => new[] { p.Name, p.Id.ToString() }).ToArray();
+
+        await JS.InvokeVoidAsync("exportToPdf", "General Department Report", headers, rows);
     }
 
     private Task OpenDialogAsync()

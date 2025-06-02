@@ -1,6 +1,7 @@
 using System.Text;
 using BaseLibrary.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Server.Library.Data;
@@ -36,6 +37,21 @@ builder.Services.AddScoped<IGenericRepositoryInterface<City>, CityRepository>();
 builder.Services.AddScoped<IGenericRepositoryInterface<Town>, TownRepository>();
 
 builder.Services.AddScoped<IGenericRepositoryInterface<Employee>, EmployeeRepository>();
+
+builder.Services.AddScoped<IGenericRepositoryInterface<Doctor>, DoctorRepository>();
+
+builder.Services.AddScoped<IGenericRepositoryInterface<Sanction>, SanctionRepository>();
+builder.Services.AddScoped<IGenericRepositoryInterface<SanctionType>, SanctionTypeRepository>();
+
+builder.Services.AddScoped<IGenericRepositoryInterface<Vacation>, VacationRepository>();
+builder.Services.AddScoped<IGenericRepositoryInterface<VacationType>, VacationTypeRepository>();
+
+builder.Services.AddScoped<IGenericRepositoryInterface<OverTime>, OverTimeRepository>();
+builder.Services.AddScoped<IGenericRepositoryInterface<OverTimeType>, OverTimeTypeRepository>();
+
+builder.Services.AddScoped<IImageService, ImageRepository>();
+
+
 
 builder.Services.AddAuthentication(
     options => 
@@ -87,13 +103,15 @@ options => {
 
 var app = builder.Build();
 
+
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorWasm");
 
@@ -103,4 +121,23 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+
+app.MapPost("/upload", async (IFormFile file, IImageService imageService) =>
+{
+    if (file == null || file.Length == 0)
+        return Results.BadRequest("No file uploaded.");
+
+    try
+    {
+        var imageUrl = await imageService.SaveImageAsync(file);
+        return Results.Ok(new { url = imageUrl });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(ex.Message);
+    }
+})
+.WithName("UploadImage")
+.Accepts<IFormFile>("multipart/form-data")
+.Produces(200).DisableAntiforgery();
 app.Run();

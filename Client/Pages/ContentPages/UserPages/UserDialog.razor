@@ -1,4 +1,67 @@
-﻿
+﻿<MudDialog>
+    <TitleContent>
+        @Title  User
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@item">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField Label="User Id" @bind-value="item.UserId" ReadOnly=true />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Email " @bind-value="item.Email" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Name " @bind-value="item.Name" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSelect T="string" Label="System Role"
+                               @bind-Value="item.Role"
+                               Dense="true" Required="true">
+                        <MudSelectItem Value="0" Disabled="true">Select one...</MudSelectItem>
+
+                        @foreach (var element in dataSelect)
+                        {
+                            <MudSelectItem Value="@element.Name">@element.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" OnClick="Save">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public ManageUser item { get; set; } = new();
+    [Parameter] public string Title { get; set; }
+    [Parameter] public List<SystemRole> dataSelect { get; set; } = new();
+    [Parameter] public EventCallback<ManageUser> HandleSaveOperationEvent { get; set; }
+
+    async void Save()
+    {
+        if (item.UserId <= 0)
+        {
+            Snackbar.Add("You Need to provide User ID", Severity.Warning);
+        }
+        else
+        {
+            await HandleSaveOperationEvent.InvokeAsync(item);
+            MudDialog.Close(DialogResult.Ok("Done"));
+            // StateHasChanged();
+        }
+    }
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    private void Cancel() => MudDialog.Cancel();
+}
 
 
 

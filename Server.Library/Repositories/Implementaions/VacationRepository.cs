@@ -38,7 +38,7 @@ namespace Server.Library.Repositories.Implementaions
 
         public async Task<GeneralResponse> Update(Vacation item)
         {
-            var obj = await appDbContext.Vacations.FirstOrDefaultAsync(dr => dr.EmployeeId == item.Id);
+            var obj = await appDbContext.Vacations.FirstOrDefaultAsync(dr => dr.EmployeeId == item.EmployeeId);
             if (obj == null) return NotFound();
             obj.StartDate = item.StartDate;
             obj.NumberOfDays = item.NumberOfDays;

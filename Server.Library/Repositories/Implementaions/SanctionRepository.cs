@@ -38,7 +38,7 @@ namespace Server.Library.Repositories.Implementaions
 
         public async Task<GeneralResponse> Update(Sanction item)
         {
-            var obj = await appDbContext.Sanctions.FirstOrDefaultAsync(dr => dr.EmployeeId == item.Id);
+            var obj = await appDbContext.Sanctions.FirstOrDefaultAsync(dr => dr.EmployeeId == item.EmployeeId);
             if (obj == null) return NotFound();
             obj.PunishmentDate = item.PunishmentDate;
             obj.Punishment = item.Punishment;

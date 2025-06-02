@@ -1,0 +1,189 @@
+﻿@implements IDisposable
+@if (allState.ShowHealth)
+{
+    <br />
+    <br />
+    <MudTable Items="filteredDoctors"
+    Hover="true"
+    SortLabel="Sort By"
+    Elevation="4"
+    AllowUnsorted="false"
+    Striped="true"
+    Bordered="true"
+    Dense="true"
+    Class="p-4"
+    >
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Health Information</MudText>
+            <MudSpacer />
+            <MudTextField T="string"
+            Immediate="true"
+            Value="@searchString1"
+            ValueChanged="OnSearchChanged"
+            Placeholder="Search"
+            Adornment="Adornment.Start"
+            AdornmentIcon="@Icons.Material.Filled.Search"
+            IconSize="Size.Medium"
+            Class="mt-0" />
+            <MudSpacer />
+            <MudButton @onclick="AddButtonClicked" Variant="Variant.Filled" Color="Color.Primary">
+                Add Health Check
+            </MudButton>
+            
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>#</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Doctor, object>(x=>x.EmployeeId)">Id</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Doctor, object>(x=>x.MedicalRecommendation)">Medical Recommendation</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Doctor, object>(x=>x.MedicalDiagnose)">Medical Diagnose</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Doctor, object>(x=>x.Date)">Date</MudTableSortLabel></MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="#">@((filteredDoctors?.ToList().IndexOf(context) ?? -1) + 1)</MudTd>
+            <MudTd DataLabel="EmployeeId">@context.EmployeeId</MudTd>
+            <MudTd DataLabel="MedicalRecommendation">@context.MedicalRecommendation</MudTd>
+            <MudTd DataLabel="MedicalDiagnose">@context.MedicalDiagnose</MudTd>
+            <MudTd DataLabel="Date">@context.Date</MudTd>
+            <MudTd DataLabel="Action">
+                <i class="bi bi-pencil text-info" id="cursorStyle"
+                @onclick="()=> EditClicked(context)"></i>
+                <i class="bi bi-trash text-danger" id="cursorStyle"
+                @onclick="()=> DeleteClicked(context)"></i>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudTd ColSpan="4" Align="Align.Center">
+                <MudText Typo="Typo.body1">No matching data found.                                                     </MudText>
+            </MudTd>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[]{10, 20,30}" />
+        </PagerContent>
+    </MudTable>
+}
+@code {
+    public string Title { get; set; } = "Add";
+    DoctorDialog? doctorDialog;
+    Doctor Doctor = new();
+    public List<Doctor> Doctors { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        await GetHealth();
+        allState.Action += StateHasChanged;
+    }
+
+    private async Task GetHealth() => Doctors = await doctorService.GetAll(Constants.DoctorBaseUrl);
+
+    async Task AddButtonClicked()
+    {
+        Doctor = new();
+        Title = "Add";
+        await OpenDialog();
+    }
+
+    async Task OpenDialog()
+    {
+        var parameters = new DialogParameters
+            {
+                ["Title"] = $"{Title}",
+                ["Doctor"] = Doctor,
+                ["HandleSaveOperationEvent"] = EventCallback.Factory.Create(this,
+                                                   new Func<Doctor, Task>(HandleSaveOperationEvent))
+            };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = await DialogService.ShowAsync<DoctorDialog>("Health Issue!", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled)
+        {
+            Snackbar.Add("Canceled", Severity.Error);
+            return;
+        }
+    }
+    async Task HandleSaveOperationEvent(Doctor doc)
+    {
+        var (flag, message) = await doctorService.Insert(doc, Constants.DoctorBaseUrl);
+        var response = DisplayMessage(flag, message);
+        if (response)
+        {
+            Doctor = new();
+            await GetHealth();
+        }
+    }
+    private async Task EditClicked(Doctor doc)
+    {
+        Doctor = doc;
+        Title = "Edit";
+        await OpenDialog();
+    }
+    private bool DisplayMessage(bool flag, string message)
+    {
+        Snackbar.Add(message, flag ? Severity.Success : Severity.Error);
+        return flag;
+    }
+    private async Task DeleteClicked(Doctor item)
+    {
+        var parameters = new DialogParameters
+            {
+                ["ContentText"] = $"Are you sure you wanna delete this ?!",
+                ["ButtonText"] = "Yes",
+                ["Color"] = Color.Error
+            };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete!", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled)
+        {
+            Snackbar.Add("Canceled", Severity.Error);
+            return;
+        }
+
+        var response = await doctorService.DeleteById(item.EmployeeId, Constants.DoctorBaseUrl);
+        if (DisplayMessage(response.Flag, response.Message))
+            await GetHealth();
+    }
+
+    public async Task ToolbarClickHandle(DataGridRowClickEventArgs<Doctor> args)
+    {
+
+        // if args = Pdf = > export pdf and if excel export excel
+
+    }
+
+
+    // Filter Data table to fit
+    private IEnumerable<Doctor>? filteredDoctors => Doctors.Where(FilterFunc);
+    private string _filterText = string.Empty;
+    private string searchString1 = "";
+    private Task OnSearchChanged(string text)
+    {
+        searchString1 = text;
+        StateHasChanged(); // Refresh the UI
+        return Task.CompletedTask;
+    }
+    private bool FilterFunc(Doctor element)
+    {
+        if (string.IsNullOrWhiteSpace(searchString1))
+            return true;
+        if (element.MedicalDiagnose!.Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.MedicalRecommendation!.Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.EmployeeId.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+    public void Dispose()
+    {
+        allState.Action -= StateHasChanged;
+    }
+
+}

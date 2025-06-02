@@ -10,5 +10,7 @@ namespace Server.Library.Repositories.Contracts
         Task<GeneralResponse> Insert(T item);
         Task<GeneralResponse> Update(T item);
         Task<GeneralResponse> DeleteById(int id);
+
+
     }
 }

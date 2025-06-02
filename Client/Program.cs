@@ -32,6 +32,7 @@ builder.Services.AddScoped<LocalStorageService>();
 builder.Services.AddScoped<AuthenticationStateProvider,CustomeAuthenticationStateProvider>();
 builder.Services.AddScoped<IUserAccountService,UserAccountService>();
 builder.Services.AddScoped<AllState>();
+builder.Services.AddScoped<UserProfileState>();
 
 // GeneralDepartment , Department , Branch 
 builder.Services.AddScoped<IGenericServieInterface<GeneralDepartment>, GenericServiceImplementaion<GeneralDepartment>>();
@@ -45,6 +46,14 @@ builder.Services.AddScoped<IGenericServieInterface<Town>, GenericServiceImplemen
 
 // Employee
 builder.Services.AddScoped<IGenericServieInterface<Employee>, GenericServiceImplementaion<Employee>>();
+
+builder.Services.AddScoped<IGenericServieInterface<OverTime>, GenericServiceImplementaion<OverTime>>();
+builder.Services.AddScoped<IGenericServieInterface<OverTimeType>, GenericServiceImplementaion<OverTimeType>>();
+builder.Services.AddScoped<IGenericServieInterface<Vacation>, GenericServiceImplementaion<Vacation>>();
+builder.Services.AddScoped<IGenericServieInterface<VacationType>, GenericServiceImplementaion<VacationType>>();
+builder.Services.AddScoped<IGenericServieInterface<Sanction>, GenericServiceImplementaion<Sanction>>();
+builder.Services.AddScoped<IGenericServieInterface<SanctionType>, GenericServiceImplementaion<SanctionType>>();
+builder.Services.AddScoped<IGenericServieInterface<Doctor>, GenericServiceImplementaion<Doctor>>();
 
 builder.Services.AddMudServices(config =>
 {

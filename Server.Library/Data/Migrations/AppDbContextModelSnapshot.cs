@@ -36,6 +36,9 @@ namespace Server.Library.Data.Migrations
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Password")
                         .HasColumnType("nvarchar(max)");
 
@@ -310,12 +313,12 @@ namespace Server.Library.Data.Migrations
                     b.Property<DateTime>("PunishmentDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("SanactionTypeId")
+                    b.Property<int>("SanctionTypeId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SanactionTypeId");
+                    b.HasIndex("SanctionTypeId");
 
                     b.ToTable("Sanctions");
                 });
@@ -505,7 +508,9 @@ namespace Server.Library.Data.Migrations
                 {
                     b.HasOne("BaseLibrary.Entities.SanctionType", "SanactionType")
                         .WithMany("Sanactions")
-                        .HasForeignKey("SanactionTypeId");
+                        .HasForeignKey("SanctionTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("SanactionType");
                 });

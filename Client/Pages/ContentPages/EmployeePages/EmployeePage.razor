@@ -1,4 +1,5 @@
-﻿@implements IDisposable
+﻿@using Client.Pages.OtherPages.DoctorPage
+@implements IDisposable
 @if (allState.ShowEmployee)
 {
     if (ShowMainPage)
@@ -26,10 +27,12 @@
                 AdornmentIcon="@Icons.Material.Filled.Search"
                 IconSize="Size.Medium"
                 Class="mt-0" />
+
                 <MudSpacer />
                 <MudButton @onclick="ShowAddOrUpdateEmployeeButtonClicked" Variant="Variant.Filled" Color="Color.Primary">
                     Add Employee
                 </MudButton>
+
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>#</MudTh>
@@ -63,9 +66,8 @@
                 <MudTd DataLabel="Action">
                     <MudMenu Icon="@Icons.Material.Filled.MenuOpen"
                     AriaLabel="Open user menu"
-                    FullWidth
-                    >
-                        <MudMenuItem OnClick="()=>ViewClicked(context)" Label="View" IconColor="Color.Tertiary" Icon="@Icons.Material.Outlined.Visibility"  />
+                    FullWidth>
+                        <MudMenuItem OnClick="()=>ViewClicked(context)" Label="View" IconColor="Color.Tertiary" Icon="@Icons.Material.Outlined.Visibility" />
                         <MudMenuItem OnClick="()=>EditClicked(context)" Icon="@Icons.Material.Filled.Edit" IconColor="Color.Info" Label="Edit" />
                         <MudMenuItem OnClick="()=>DeleteClicked(context)" Label="Remove" IconColor="Color.Error" Icon="@Icons.Material.Outlined.Delete" />
                         <MudDivider />
@@ -102,14 +104,13 @@
     NotifyParentFromCloseClicked="NotifyParentFromCloseClicked"
     HandleSaveEmployeeEventClicked="HandleSaveEmployeeEventClicked"
     HandleGeneralDepartmentSelectedEvent="HandleGeneralDepartmentSelectedEvent" />
-    
-    <EmployeeDetailPage
-        EmployeeDetail="Employee"
-        ShowDetailPage=ShowDetailPage
-        HandleDetailPageCloseBtnClicked="HandleDetailPageCloseBtn"
-    />
-}
 
+    <EmployeeDetailPage EmployeeDetail="Employee"
+    ShowDetailPage=ShowDetailPage
+    HandleDetailPageCloseBtnClicked="HandleDetailPageCloseBtn" />
+
+
+}
 @code {
     AddOrUpdateEmployeePage? addOrUpdateEmployee;
     private List<Employee>? employees = [];
@@ -170,6 +171,7 @@
     {
         await LoadEmployee();
         await LoadDefaults();
+        await LoadTypes();
         allState.Action += StateHasChanged;
     }
     public void Dispose() => allState.Action -= StateHasChanged;
@@ -241,16 +243,8 @@
 
     private bool DisplayMessage(bool flag, string message)
     {
-        if (flag)
-        {
-            Snackbar.Add(message, Severity.Success);
-            return true;
-        }
-        else
-        {
-            Snackbar.Add(message, Severity.Error);
-            return false;
-        }
+        Snackbar.Add(message, flag ? Severity.Success : Severity.Error);
+        return flag;
     }
 
 
@@ -268,7 +262,7 @@
     {
         ShowDetailPage = false;
         ShowMainPage = true;
-        
+
     }
     private void EditClicked(Employee emp)
     {
@@ -320,26 +314,110 @@
         if (DisplayMessage(response.Flag, response.Message))
             await LoadEmployee();
     }
-    private void AddVacationClicked(Employee emp)
+
+    private async Task LoadTypes()
     {
-        Snackbar.Add($"{emp.Name} Add Vacation clicked ", Severity.Info);
-        SelectedEmployee = emp;
+        vacationTypes = await vacationTypeService.GetAll(Constants.VacationTypeBaseUrl);
+        overTimeTypes = await overTimeTypeService.GetAll(Constants.OverTimeTypeBaseUrl);
+        sanctionTypes = await sanctionTypeService.GetAll(Constants.SanctionTypeBaseUrl);
+
     }
-    private void AddOverTimeClicked(Employee emp)
+
+    public List<VacationType> vacationTypes { get; set; } = new();
+    private async Task AddVacationClicked(Employee emp)
     {
-        Snackbar.Add($"{emp.Name} Add Over Time clicked ", Severity.Error);
-        SelectedEmployee = emp;
+        var parameters = new DialogParameters()
+            {
+                ["Title"] = "Add",
+                ["item"] = new Vacation() { EmployeeId = emp.Id },
+                ["dataSelect"] = vacationTypes,
+                ["HandleSaveOperationEvent"] = EventCallback.Factory.Create(this,
+                                                       new Func<Vacation, Task>(SaveVacation))
+            };
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<VacationDialog>("Add", parameters, options);
     }
-    private void AddSanctionClicked(Employee emp)
+    public async Task SaveVacation(Vacation item)
     {
-        Snackbar.Add($"{emp.Name} Add Sanction clicked ", Severity.Error);
-        SelectedEmployee = emp;
+        var response = await vacationService.
+        Insert(item, Constants.VacationBaseUrl);
+        DisplayMessage(response.Flag, response.Message);
     }
-    private void AddHealthClicked(Employee emp)
+
+    public List<OverTimeType> overTimeTypes { get; set; } = new();
+    private async Task AddOverTimeClicked(Employee emp)
     {
-        Snackbar.Add($"{emp.Name} Add Health clicked ", Severity.Error);
-        SelectedEmployee = emp;
+        var parameters = new DialogParameters()
+            {
+                ["Title"] = "Add",
+                ["item"] = new OverTime() { EmployeeId = emp.Id },
+                ["dataSelect"] = overTimeTypes,
+                ["HandleSaveOperationEvent"] = EventCallback.Factory.Create(this,
+                                                           new Func<OverTime, Task>(SaveOverTime))
+            };
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<OverTimeDialog>("Add", parameters, options);
     }
-   
+    public async Task SaveOverTime(OverTime item)
+    {
+        var response = await overTimeService.
+        Insert(item, Constants.OverTimeBaseUrl);
+        DisplayMessage(response.Flag, response.Message);
+    }
+
+    public List<SanctionType> sanctionTypes { get; set; } = new();
+    private async Task AddSanctionClicked(Employee emp)
+    {
+        var parameters = new DialogParameters()
+            {
+                ["Title"] = "Add",
+                ["item"] = new OverTime() { EmployeeId = emp.Id },
+                ["dataSelect"] = overTimeTypes,
+                ["HandleSaveOperationEvent"] = EventCallback.Factory.Create(this,
+                                                               new Func<Sanction, Task>(SaveSanction))
+            };
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<SanctionDialog>("Add", parameters, options);
+    }
+    public async Task SaveSanction(Sanction item)
+    {
+        var response = await sanctionService.
+        Insert(item, Constants.SanctionBaseUrl);
+        DisplayMessage(response.Flag, response.Message);
+    }
+    async Task HandleSaveOperationEvent(Doctor doc)
+    {
+        var (flag, message) = await doctorService.Insert(doc, Constants.DoctorBaseUrl);
+        var response = DisplayMessage(flag, message);
+    }
+    private async Task AddHealthClicked(Employee emp)
+    {
+        var parameters = new DialogParameters
+            {
+                ["Title"] = $"Add",
+                ["Doctor"] = new Doctor() { EmployeeId = emp.Id },
+                ["HandleSaveOperationEvent"] = EventCallback.Factory.Create(this,
+                                                new Func<Doctor, Task>(HandleSaveOperationEvent))
+            };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = await DialogService.ShowAsync<DoctorDialog>("Health Issue!", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled)
+        {
+            Snackbar.Add("Canceled", Severity.Error);
+            return;
+        }
+
+        // var response = await cityService.DeleteById(ct.Id, Constants.CityBaseUrl);
+        // if (await DisplayMessage(response.Flag, response.Message))
+        //     await GetCities();
+        Snackbar.Add($"Add Health Done  ", Severity.Success);
+        // SelectedEmployee = emp;
+    }
+
+
 }
 

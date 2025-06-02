@@ -1,84 +1,86 @@
-﻿@if (ShowDetailPage){
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="card border-success shadow-lg">
-                    <div class="card-header">@EmployeeDetail.Name Details</div>
-                    <div class="card-body">
-                        <div class="hstack gap-2">
-                            <div class="vstack gap-3">
-                                <img src="@EmployeeDetail.Photo" class="card-img-top border-warning shadow-sm" style="width=100px;height=100px;border-radius=50%" />
-                                <table class="table border-danger">
-                                    <tbody>
-                                        <tr>
-                                            <td> <h6 class="fw-bold">Name :</h6></td>
-                                            <td>@EmployeeDetail.Name</td>
-                                        </tr>
-                                        <tr>
-                                            <td> <h6 class="fw-bold">Job Title :</h6></td>
-                                            <td>@EmployeeDetail.JobName</td>
-                                        </tr>
-                                        <tr>
-                                            <td><h6 class="fw-bold">Telephone:</h6></td>
-                                            <td>@EmployeeDetail.TelephoneNumber</td>
-                                        </tr>
-                                        <tr>
-                                            <td> <h6 class="fw-bold">Address :</h6></td>
-                                            <td>@EmployeeDetail.Address</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <table class="table border-primary">
-                                <tbody>
-                                    <tr>
-                                        <td colspan="2" class="text-center"><h6 class="fw-bold">Department Information</h6></td>
-                                    </tr>
-                                    <tr>
-                                        <td> <h6 class="fw-bold">General Department :</h6></td>
-                                        <td>@EmployeeDetail.Branch.Department.GeneralDepartment.Name</td>
-                                    </tr>
-                                    <tr>
-                                        <td> <h6 class="fw-bold">Department :</h6></td>
-                                        <td>@EmployeeDetail.Branch.Department.Name</td>
-                                    </tr>
-                                    <tr>
-                                        <td> <h6 class="fw-bold">Branch :</h6></td>
-                                        <td>@EmployeeDetail.Branch.Name</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table class="table border-success">
-                                <tbody>
-                                    <tr>
-                                        <td colspan="2" class="text-center"><h6 class="fw-bold">Location Information</h6></td>
-                                    </tr>
-                                    <tr>
-                                        <td> <h6 class="fw-bold">Country :</h6></td>
-                                        <td>@EmployeeDetail.Town.City.Country.Name</td>
-                                    </tr>
-                                    <tr>
-                                        <td> <h6 class="fw-bold">City :</h6></td>
-                                        <td>@EmployeeDetail.Town.City.Name</td>
-                                    </tr>
-                                    <tr>
-                                        <td> <h6 class="fw-bold">Branch :</h6></td>
-                                        <td>@EmployeeDetail.Town.Name</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <button class="btn btn-danger" @onclick="DetailPageCloseBtnClicked">
-                            Close
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+﻿@using MudBlazor
+
+@if (ShowDetailPage)
+{
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-5">
+        <MudCard Class="border-success elevation-6" style="background-color: #f5f3da;border-radius: 18px;">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">@EmployeeDetail.Name Details</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid GutterSize="3">
+                    <!-- Personal Info -->
+                    <MudItem xs="12" sm="4">
+                        <MudPaper Class="pa-3" Elevation="2" >
+                            <MudStack Spacing="2" AlignItems="AlignItems.Center">
+                                <MudAvatar Image="@EmployeeDetail.Photo" Size="Size.Large" Class="border border-warning" Style="width: 100px; height: 100px;" />
+                                <MudDivider />
+                                <MudText Typo="Typo.subtitle2">
+                                    <span style="font-weight:bold;">Name:</span> @EmployeeDetail.Name
+                                </MudText>
+                                <MudText Typo="Typo.subtitle2">
+                                    <span style="font-weight:bold;">Job Title:</span> @EmployeeDetail.JobName
+                                </MudText>
+                                <MudText Typo="Typo.subtitle2">
+                                    <span style="font-weight:bold;">Telephone:</span> @EmployeeDetail.TelephoneNumber
+                                </MudText>
+                                <MudText Typo="Typo.subtitle2">
+                                    <span style="font-weight:bold;">Address:</span> @EmployeeDetail.Address
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                    <!-- Department Info -->
+                    <MudItem xs="12" sm="4">
+                        <MudPaper Class="pa-3" Elevation="2">
+                            <MudText Typo="Typo.subtitle1" Align="Align.Center" style="font-weight:bold;">
+                                Department Information
+                            </MudText>
+                            <MudDivider Class="mb-2" />
+
+                            <MudText Typo="Typo.subtitle2">
+                                <span style="font-weight:bold;">General Department:</span> @(EmployeeDetail.Branch?.Department?.GeneralDepartment?.Name ?? "-")
+                            </MudText>
+                            <MudText Typo="Typo.subtitle2">
+                                <span style="font-weight:bold;">Department:</span> @(EmployeeDetail.Branch?.Department?.Name ?? "-")
+                            </MudText>
+                            <MudText Typo="Typo.subtitle2">
+                                <span style="font-weight:bold;">Branch:</span> @(EmployeeDetail.Branch?.Name ?? "-")
+                            </MudText>
+
+                        </MudPaper>
+                    </MudItem>
+                    <!-- Location Info -->
+                    <MudItem xs="12" sm="4">
+                        <MudPaper Class="pa-3" Elevation="2">
+                            <MudText Typo="Typo.subtitle1" Align="Align.Center" style="font-weight:bold;">
+                                Location Information
+                            </MudText>
+                            <MudDivider Class="mb-2" />
+
+                            <MudText Typo="Typo.subtitle2">
+                                <span style="font-weight:bold;">Country:</span> @(EmployeeDetail.Town?.City?.Country?.Name ?? "-")
+                            </MudText>
+                            <MudText Typo="Typo.subtitle2">
+                                <span style="font-weight:bold;">City:</span> @(EmployeeDetail.Town?.City?.Name ?? "-")
+                            </MudText>
+                            <MudText Typo="Typo.subtitle2">
+                                <span style="font-weight:bold;">Town:</span> @(EmployeeDetail.Town?.Name ?? "-")
+                            </MudText>
+
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Class="m-2" Color="Color.Error" Variant="Variant.Filled" OnClick="DetailPageCloseBtnClicked">
+                    Close
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudContainer>
 }
+
 @code {
     [Parameter] public bool ShowDetailPage { get; set; }
     [Parameter] public Employee EmployeeDetail { get; set; } = new();
@@ -86,4 +88,3 @@
 
     async Task DetailPageCloseBtnClicked() => await HandleDetailPageCloseBtnClicked.InvokeAsync();
 }
-

@@ -9,6 +9,17 @@
     {
       "library": "bootstrap-icons@1.11.2",
       "destination": "wwwroot/bootstrap-icons/"
+    },
+    {
+      "library": "jspdf@3.0.1",
+      "destination": "wwwroot/jspdf/"
+    },
+    {
+      "library": "jspdf-autotable@5.0.2",
+      "destination": "wwwroot/jspdf/jspdf-autotable/",
+      "files": [
+        "jspdf.plugin.autotable.min.js"
+      ]
     }
   ]
 }

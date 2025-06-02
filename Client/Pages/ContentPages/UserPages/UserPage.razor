@@ -1,102 +1,100 @@
 ﻿@page "/user"
 @implements IDisposable
 
-@if(allState.ShowUser)
-{
-    <h1>User Page</h1>
-}
-@code{
-    protected override async Task OnInitializedAsync()
-    {
-        allState.Action += StateHasChanged;
-    }
-
-    public void Dispose()
-    {
-        allState.Action -= StateHasChanged;
-    }
-}
-@*
 @if (allState.ShowUser)
 {
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="float-start">User</h4>
-                    </div>
-                    <div class="card-header" style="max-height:580px;overflow-x:hidden;overflow-y:scroll;">
-                        <div class="card-body">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">#</th>
-                                        <th scope="col">Id</th>
-                                        <th scope="col">Name</th>
-                                        <th scope="col">Role</th>
-                                        <th scope="col">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if (ManageUsers is not null)
-                                    {
-                                        int count = 1;
-                                        foreach (var item in ManageUsers)
-                                        {
-                                            <tr>
-                                                <th scope="row">@count</th>
-                                                <td>@item.UserId</td>
-                                                <td>@item.Name</td>
-                                                <td>@item.Role</td>
-                                                <td>@item.</td>
-                                                <td>
-                                                    <i class="bi bi-pencil text-info" id="cursorStyle"
-                                                    @onclick="()=> EditClicked(item)"></i>
-                                                    <i class="bi bi-trash text-danger" id="cursorStyle"
-                                                    @onclick="()=> DeleteClicked(item)"></i>
-                                                </td>
-                                            </tr>
 
-                                            count++;
-                                        }
-
-                                    }
-                                    else
-                                    {
-                                        <tr>
-                                            <td colspan="4">
-                                                <div class="alert alert-info text-center">No City added yet!</div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <br />
+    <br />
+    <MudTable Items="filteredData"
+              Hover="true"
+              SortLabel="Sort By"
+              Elevation="4"
+              AllowUnsorted="false"
+              Striped="true"
+              Bordered="true"
+              Dense="true"
+              Class="p-4">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Manage User's</MudText>
+            <MudSpacer />
+            <MudTextField T="string"
+                          Immediate="true"
+                          Value="@searchString1"
+                          ValueChanged="OnSearchChanged"
+                          Placeholder="Search"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium"
+                          Class="mt-0" />
+            <MudSpacer />
+            @* <MudButton @onclick="AddItem" Variant="Variant.Filled" Color="Color.Primary">
+                Add
+            </MudButton> *@
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>#</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<ManageUser, object>(x=>x.UserId)">User Id</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<ManageUser, object>(x=>x.Name)">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<ManageUser, object>(x=>x.Role)">Role</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<ManageUser, object>(x=>x.Email)">Email</MudTableSortLabel></MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="#">@((filteredData?.ToList().IndexOf(context) ?? -1) + 1)</MudTd>
+            <MudTd DataLabel="UserId">@context.UserId</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Role">@context.Role</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Action">
+                <i class="bi bi-pencil text-info" id="cursorStyle"
+                   @onclick="()=> EditClicked(context)"></i>
+                <i class="bi bi-trash text-danger" id="cursorStyle"
+                   @onclick="()=> DeleteClicked(context)"></i>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudTd ColSpan="4" Align="Align.Center">
+                <MudText Typo="Typo.body1">No matching data found.                                                     </MudText>
+            </MudTd>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[]{10, 20,30}" />
+        </PagerContent>
+    </MudTable>
 }
 
-<UserDialog @ref="userDialog"
-            HandleSaveOperationEvent="HandleSaveOperationEvent"
-            ManageUser="ManageUser"
-            SystemRoles="SystemRoles"
-            />
-<style>
-    .cursorStyle {
-    cursor: pointer;
-    }
-</style>
 @code {
-    ManageUser ManageUser = new();
-    UserDialog? userDialog;
-
+    ManageUser item = new();
     public string Title { get; set; } = "Add";
-    public List<ManageUser> ManageUsers { get; set; } = new();
-    public List<SystemRole> SystemRoles { get; set; } = new();
+    public List<ManageUser> data { get; set; } = new();
+    public List<SystemRole> dataSelect { get; set; } = new();
+
+    private IEnumerable<ManageUser>? filteredData => data.Where(FilterFunc);
+    private string _filterText = string.Empty;
+    private string searchString1 = "";
+    private Task OnSearchChanged(string text)
+    {
+        searchString1 = text;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+    private bool FilterFunc(ManageUser element)
+    {
+        if (string.IsNullOrWhiteSpace(searchString1))
+            return true;
+        if (element.Name!.Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.UserId.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Role!.Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Email!.Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -104,72 +102,84 @@
         await GetUsers();
         allState.Action += StateHasChanged;
     }
-    public async Task GetRoles()
-    {
-        ManageUsers = await accountService.GetUsers();
-    }
     public async Task GetUsers()
     {
-        SystemRoles = await accountService.GetRoles();
+        data = await accountService.GetUsers();
+    }
+    public async Task GetRoles()
+    {
+        dataSelect = await accountService.GetRoles();
+    }
+    public async Task HandleSaveOperationEvent(ManageUser user)
+    {
+        var result = await accountService.UpdateUser(user);
+        bool successCheck = DisplayMessage(result.Flag, result.Message);
+        if (successCheck)
+        {
+            item = new();
+            await GetUsers();
+        }
+
+    }
+    private Task OpenDialogAsync()
+    {
+        var parameters = new DialogParameters()
+            {
+                ["Title"] = Title,
+                ["item"] = this.item,
+                ["dataSelect"] = this.dataSelect,
+                ["HandleSaveOperationEvent"] = EventCallback.Factory.Create(this,
+                                                    new Func<ManageUser, Task>(HandleSaveOperationEvent))
+            };
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        return DialogService.ShowAsync<UserDialog>("Add", parameters, options);
     }
 
-    // void AddButtonClicked()
+    private void EditClicked(ManageUser item)
+    {
+        this.item = item;
+        Title = "Update";
+        OpenDialogAsync();
+    }
+    // private void AddItem()
     // {
-    //     City = new();
-    //     cityDialog?.ChangeTitle("Add");
-    //     OpenDialog();
+    //     this.item = new();
+    //     Title = "Add";
+    //     OpenDialogAsync();
     // }
+    private async Task DeleteClicked(ManageUser item)
+    {
 
+        var parameters = new DialogParameters
+            {
+                ["ContentText"] = $"Are you sure you wanna delete {item.UserId}",
+                ["ButtonText"] = "Yes",
+                ["Color"] = Color.Error
+            };
 
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete!", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled)
+        {
+            Snackbar.Add("Canceled", Severity.Error);
+            return;
+        }
+
+        var response = await accountService.DeleteUser(item.UserId);
+        if (DisplayMessage(response.Flag, response.Message))
+            await GetUsers();
+    }
+
+    private bool DisplayMessage(bool flag, string message)
+    {
+        Snackbar.Add(message, flag ? Severity.Success : Severity.Error);
+        return flag;
+    }
     public void Dispose()
     {
         allState.Action -= StateHasChanged;
     }
-    void OpenDialog()
-    {
-        userDialog?.OpenDialog();
-    }
-
-    public async Task HandleSaveOperationEvent(ManageUser user)
-    {
-        var result = await accountService.UpdateUser(user);
-        bool successCheck = await DisplayMessage(result.Flag,result.Message);
-        if (successCheck)
-        {
-            ManageUser = new();
-            await GetUsers();
-            userDialog!.IsVisible = false;
-        }
-
-    }
-    private void EditClicked(ManageUser user)
-    {
-        ManageUser = user;
-        OpenDialog();
-    }
-    private async Task DeleteClicked(ManageUser user)
-    {
-        var confirm = await dialogService.ConfirmAsync($"Are you sure you wanna delete {user.Name}", "Confirm Delete!");
-        if (!confirm) return;
-
-        var response = await accountService.DeleteUser(user.UserId);
-        if (await DisplayMessage(response.Flag, response.Message))
-            await GetUsers(); 
-    }
-
-    private async Task<bool> DisplayMessage(bool flag, string message)
-    {
-        if (flag)
-        {
-            await dialogService.AlertAsync(message, "Success");
-            return true;
-        }
-        else
-        {
-            await dialogService.AlertAsync(message, "Alert!");
-            return false;
-        }
-    }
-
 }
- *@

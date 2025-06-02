@@ -1,0 +1,207 @@
+﻿ @implements IDisposable
+@if (allState.ShowVacation)
+{
+    <br />
+    <br />
+    <MudTable Items="filteredData"
+              Hover="true"
+              SortLabel="Sort By"
+              Elevation="4"
+              AllowUnsorted="false"
+              Striped="true"
+              Bordered="true"
+              Dense="true"
+              Class="p-4">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Manage Vacation's</MudText>
+            <MudSpacer />
+            <MudTextField T="string"
+                          Immediate="true"
+                          Value="@searchString1"
+                          ValueChanged="OnSearchChanged"
+                          Placeholder="Search"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium"
+                          Class="mt-0" />
+            <MudSpacer />
+            <MudButton @onclick="AddItem" Variant="Variant.Filled" Color="Color.Primary">
+                Add
+            </MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>#</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<OverTime, object>(x=>x.Id)">Id</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<OverTime, object>(x=>x.StartDate)">Start Date</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<OverTime, object>(x=>x.EndTime)">End Date</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<OverTime, object>(x=>x.EmployeeId)">Employee Id</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<OverTime, object>(x=>x.NumberOfDays)">Number Of Days</MudTableSortLabel></MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="#">@((filteredData?.ToList().IndexOf(context) ?? -1) + 1)</MudTd>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="StartDate">@context.StartDate</MudTd>
+            <MudTd DataLabel="EndTime">@context.EndTime</MudTd>
+            <MudTd DataLabel="EmployeeId">@context.EmployeeId</MudTd>
+            <MudTd DataLabel="NumberOfDays">@context.NumberOfDays</MudTd>
+            <MudTd DataLabel="Action">
+                <i class="bi bi-pencil text-info" id="cursorStyle"
+                   @onclick="()=> EditClicked(context)"></i>
+                <i class="bi bi-trash text-danger" id="cursorStyle"
+                   @onclick="()=> DeleteClicked(context)"></i>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudTd ColSpan="4" Align="Align.Center">
+                <MudText Typo="Typo.body1">No matching data found.                                                     </MudText>
+            </MudTd>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[]{10, 20,30}" />
+        </PagerContent>
+    </MudTable>
+}
+@code {
+    public string Title { get; set; } = "Add";
+    // for add or update
+    public Vacation item { get; set; } = new();
+
+    //for get data
+    private List<Vacation>? data = new();
+
+    // for using selector
+    public List<VacationType> dataSelect { get; set; } = new();
+
+    // for show data with filtering
+    private IEnumerable<Vacation>? filteredData => data.Where(FilterFunc);
+
+    private string _filterText = string.Empty;
+    private string searchString1 = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetData();
+        await GetDataSelect();
+        allState.Action += StateHasChanged;
+    }
+    public async Task GetData()
+    {
+        data = await vacationService.GetAll(Constants.VacationBaseUrl);
+    }
+
+    public async Task GetDataSelect()
+    {
+        dataSelect = await vacationTypeService.GetAll(Constants.VacationTypeBaseUrl);
+    }
+    public void Dispose()
+    {
+        allState.Action -= StateHasChanged;
+    }
+    private Task OnSearchChanged(string text)
+    {
+        searchString1 = text;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private bool FilterFunc(Vacation element)
+    {
+        if (string.IsNullOrWhiteSpace(searchString1))
+            return true;
+        if (element.Id.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.NumberOfDays.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.EndTime.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.StartDate.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    private Task OpenDialogAsync()
+    {
+        var parameters = new DialogParameters()
+            {
+                ["Title"] = Title,
+                ["item"] = this.item,
+                ["dataSelect"] = this.dataSelect,
+                ["HandleSaveOperationEvent"] = EventCallback.Factory.Create(this,
+                                            new Func<Vacation, Task>(HandleSaveOperationEvent))
+            };
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        return DialogService.ShowAsync<VacationDialog>("Add", parameters, options);
+    }
+
+    public async Task HandleSaveOperationEvent(Vacation item)
+    {
+        bool successCheck = false;
+        if (item.Id > 0)
+        {
+            var response = await vacationService.
+            Update(item, Constants.VacationBaseUrl);
+            successCheck = DisplayMessage(response.Flag, response.Message);
+        }
+        else
+        {
+            var response = await vacationService.
+           Insert(item, Constants.VacationBaseUrl);
+            successCheck = DisplayMessage(response.Flag, response.Message);
+        }
+        if (successCheck)
+        {
+            this.item = new();
+            await GetData();
+        }
+
+    }
+
+
+
+    private void EditClicked(Vacation item)
+    {
+        this.item = item;
+        Title = "Update";
+        OpenDialogAsync();
+    }
+    private void AddItem()
+    {
+        this.item = new();
+        Title = "Add";
+        OpenDialogAsync();
+    }
+    private async Task DeleteClicked(Vacation item)
+    {
+
+        var parameters = new DialogParameters
+            {
+                ["ContentText"] = $"Are you sure you wanna delete {item.Id}",
+                ["ButtonText"] = "Yes",
+                ["Color"] = Color.Error
+            };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete!", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled)
+        {
+            Snackbar.Add("Canceled", Severity.Error);
+            return;
+        }
+
+        var response = await vacationService.DeleteById(item.Id, Constants.VacationBaseUrl);
+        if (DisplayMessage(response.Flag, response.Message))
+            await GetData();
+    }
+
+    private bool DisplayMessage(bool flag, string message)
+    {
+        Snackbar.Add(message, flag ? Severity.Success : Severity.Error);
+        return flag;
+    }
+
+}

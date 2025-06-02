@@ -27,4 +27,8 @@
     <ProjectReference Include="..\Server.Library\Server.Library.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
 </Project>
